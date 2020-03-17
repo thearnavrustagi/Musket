@@ -3,26 +3,30 @@ package main
 import (
 	"fmt"
 	"strings"
+	"bufio"
+	"os"
 )
 
-var userInput string;
+var userInput string
 
 func main() {
-	fmt.Print("Welcome to VIPER Lang\n> ")
-	fmt.Scanln(&userInput)
+	reader := bufio.NewReader(os.Stdin)
 
-	interpret()
+	fmt.Print("Welcome to VIPER Lang\n> ")
+
+	userInput , _ := reader.ReadString('\n')
+	userInput = strings.Replace(userInput, "\n", "", -1)
+	
+	fmt.Print("input :-"+userInput+"\n")
+
+	interpret(userInput)
 }
 
-func interpret() {
-	fmt.Print("trying")
-	if strings.HasPrefix(userInput,"run") {
-		fmt.Print("in if %d\n",len(userInput))
-		parts := []rune(userInput)
-		fmt.Print("slice %v",parts)
-		fileName := string(parts[:])
-		fmt.Print("flname :-"+fileName+"\n")
-	}
+func interpret(input string) {
 
-	fmt.Print("elsr")
+	if strings.HasPrefix(input,"run ") {
+		parts := []rune(input)
+		fileName := string(parts[4:])
+	}
+	
 }
