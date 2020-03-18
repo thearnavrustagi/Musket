@@ -1,0 +1,12 @@
+main = (){
+  x = 20
+  y = 30
+  percent is '(x*100)/y' //forced declaration
+  z = percent
+  //is equivalent to
+  z = percent(x,y)
+}
+
+percent = (x,y){
+  return (x*100)/y
+}
