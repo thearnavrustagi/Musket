@@ -5,6 +5,7 @@ import (
 	"strings"
 	"bufio"
 	"os"
+	"io/ioutil"
 )
 
 var userInput string
@@ -77,13 +78,12 @@ func Interpret(input string,argHandler[3] CmdArgs) {
 }
 
 func CommenceReading(fileName string) {
-	file,ERR := os.Open(fileName)
+	data,ERR := ioutil.ReadFile(fileName)
 
 	if ERR != nil {
 		fmt.Print(ERR)
 		os.Exit(0)
 	}
-
-
-	defer file.Close()
+	
+	program := data.Split(string(data),"\n")
 }
