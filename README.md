@@ -1,5 +1,4 @@
 # V1PER
-#### this code is made in jdk-9<br>next_ver is a stale file dont use it
 ## V1PER SYNTAX (or general syntax)<br>
  The language is as follows
 ```java 
