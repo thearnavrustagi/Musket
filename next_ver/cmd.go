@@ -1,14 +1,12 @@
-package main
+package cmd
 
 import (
 	"fmt"
 	"strings"
-	"bufio"
-	"os"
 	"io/ioutil"
+	"os"
 )
 
-//put this in another package called cmd.go till //...
 type actionFunc func(string) bool
 type CmdArgs struct {
 	action actionFunc
@@ -50,36 +48,18 @@ func InititializeCMD() [3]CmdArgs{
 
 	return argHandler
 }
-//.....
 
-func main() {
-	
-	userInput := ""
-	reader := bufio.NewReader(os.Stdin)
-
-	fmt.Print("Welcome to VIPER Lang\n> ")
-
-	userInput ,_ = reader.ReadString('\n')
-	userInput = strings.Replace(userInput, "\n", "", -1)
-
-	argHandler := InititializeCMD()
-	Interpret(userInput,argHandler)
-}
-
-// this should also be in a file called cmd
-func Interpret(input string,argHandler[3] CmdArgs) string {
+func Interpret(input string,argHandler[3] CmdArgs) {
 	for i := 0; i < len(argHandler); i++ {
-		
 		success := argHandler[i].action(input)
 
-
 		if success {
-			break
+			os.Exit(0)
 		}
 	}
 }
 
-func CommenceReading(fileName string) string {
+func CommenceReading(fileName string) string{
 	data,ERR := ioutil.ReadFile(fileName)
 
 	if ERR != nil {
@@ -87,7 +67,6 @@ func CommenceReading(fileName string) string {
 		os.Exit(0)
 	}
 	program := string(data)
-
 	return program
 }
-//....
+
