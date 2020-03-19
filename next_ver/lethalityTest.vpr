@@ -1,12 +1,15 @@
 main = (){
   x = 20
   y = 30
-  percent is '(x*100)/y' //forced declaration
-  z = percent
-  //is equivalent to
-  z = percent(x,y)
+  percent_ <<< '(x*100)/y'
+  
+  z = percent_
+
+  z = percent << (x,y)
+  
+  print("test this and that\n")
 }
 
 percent = (x,y){
-  return (x*100)/y
+  = (x*100)/y
 }

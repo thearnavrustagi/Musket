@@ -9,11 +9,32 @@ import (
 
 	//"compiler/cmd"
 )
-//put this in another file called errors or constants
 const (
-	CMD_ARG_ERR string = "INVALID COMMAND"
+	//errors
+	CMD_ARG_ERR string= "INVALID COMMAND"
+
+	//syntax
+	FUNCTION_CALL string = "<-"
+	NORMAL_ASSIGNMENT string = "="
+	SYNTACTIC_ASSIGNMENT string = "<<-"
+
+	COMMENT_START string = "#" 
 )
-//.........................................
+
+//structs
+type actionFunc func(string) (bool,string)
+type CmdArgs struct {
+	action actionFunc
+}
+
+type Data struct {
+	dataType string
+	value string
+	syntacticType string
+}
+
+//global variables
+var DataSave map[string]Data
 
 func main() {
 	fmt.Println("Welcome to VIPER Lang")
@@ -29,24 +50,11 @@ func main() {
 		argHandler := InititializeCMD()
 		program := Interpret(userInput,argHandler)
 
-		check(program)
+		startExec(program)
 	}
 }
 
-func check(args string) {
-	if args == CMD_ARG_ERR {
-		fmt.Print("\u001B[91m",CMD_ARG_ERR,"\u001B[0m\n")
-	} else {
-		AssignmentRun(args)
-	}
-}
-
-// this should also be in a file called cmd #####################################
-type actionFunc func(string) (bool,string)
-type CmdArgs struct {
-	action actionFunc
-}
-
+//initializes the commands
 func InititializeCMD() [3]CmdArgs{
 	var argHandler[3] CmdArgs
 
@@ -84,6 +92,20 @@ func InititializeCMD() [3]CmdArgs{
 	return argHandler
 }
 
+//reads the file
+func CommenceReading(fileName string) string {
+	data,ERR := ioutil.ReadFile(fileName)
+
+	if ERR != nil {
+		fmt.Print("\u001B[91m",ERR,"\u001B[0m\n")
+		return ""
+	}
+	program := string(data)
+
+	return program
+}
+
+//interprets whatever commans is given
 func Interpret(input string,argHandler[3] CmdArgs) string{
 	for i := 0; i < len(argHandler); i++ {
 		
@@ -97,26 +119,13 @@ func Interpret(input string,argHandler[3] CmdArgs) string{
 	return CMD_ARG_ERR
 }
 
-func CommenceReading(fileName string) string {
-	data,ERR := ioutil.ReadFile(fileName)
-
-	if ERR != nil {
-		fmt.Print("\u001B[91m",ERR,"\u001B[0m\n")
-		return ""
+//
+func startExec(args string) {
+	if args == CMD_ARG_ERR {
+		fmt.Print("\u001B[91m",CMD_ARG_ERR,"\u001B[0m\n")
+	} else {
+		AssignmentRun(args)
 	}
-	program := string(data)
-
-	return program
-}
-//.............................................................................
-
-//put this code in a file called verifier#################################
-
-type idCheck func(string) bool
-
-type Syntax struct {
-	identity idCheck
-	name string
 }
 
 func AssignmentRun(program string) {
@@ -124,7 +133,10 @@ func AssignmentRun(program string) {
 	splitCode := strings.Split(program,"\n")
 
 	for i := 0; i < len(splitCode); i++ {
-
+		if strings.HasPrefix(splitCode[i],COMMENT_START) {
+			splitCode[i] = ""
+			continue
+		}
 	}
 }
 //...........................................................
