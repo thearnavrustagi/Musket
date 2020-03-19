@@ -111,9 +111,6 @@ func CommenceReading(fileName string) string {
 //.............................................................................
 
 //put this code in a file called verifier#################################
-//const (
-	//PRINTING Syntax 
-//)
 
 type idCheck func(string) bool
 
@@ -123,17 +120,11 @@ type Syntax struct {
 }
 
 func AssignmentRun(program string) {
-	splitCode := strings.Split(program," ")
+	//the splitting on new line works
+	splitCode := strings.Split(program,"\n")
 
 	for i := 0; i < len(splitCode); i++ {
-		//start_point := 0
-		
-		if strings.HasSuffix(splitCode[i],"\n") {
-			//start_point = i+1
-		}
 
-		//checking if the "__is__" statement is there
-		//if 
 	}
 }
 //...........................................................

@@ -1,7 +1,7 @@
 main = (){
   x = 20
   y = 30
-  percent __is__'(x*100)/y' //forced declaration
+  percent is '(x*100)/y' //forced declaration
   z = percent
   //is equivalent to
   z = percent(x,y)
