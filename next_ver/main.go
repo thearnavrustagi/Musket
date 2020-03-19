@@ -59,11 +59,14 @@ type Block struct {
 
 //global variables
 var headNode *Node
-var DataSave map[string]Data
+var dataSave map[string]Data
 var methodSave map[string]methodNode
 
 func main() {
 	fmt.Println("Welcome to VIPER Lang")
+	methodSave = make(map[string]methodNode)
+	dataSave = make(map[string]Data)
+
 	for true {
 		userInput := ""
 		reader := bufio.NewReader(os.Stdin)
@@ -199,11 +202,11 @@ func declareMethod (name string,parameters string,program []string,index int) {
 	}
 
 	param := string(elems[startIndex+1:endIndex])
-	//block := getBlock(program,index)
+	block := getBlock(program,index)
 
-	fmt.Println(param)
+	node := methodNode{param,block}
 
-	//node := methodNode{param,{""}}
+	methodSave[name] = node
 }
 
 func getBlock(program []string,index int) (Block){
