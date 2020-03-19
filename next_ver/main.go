@@ -106,6 +106,8 @@ func CommenceReading(fileName string) string {
 }
 //....
 
+//put this code in a file called verifier
 func AssignmentRun(program string) {
-	
+
 }
+//...
