@@ -16,13 +16,19 @@ const (
 	//syntax
 	FUNCTION_CALL string = "<-"
 	NORMAL_ASSIGNMENT string = "="
-	SYNTACTIC_ASSIGNMENT string = "<<-"
+	SYNTACTIC_ASSIGNMENT string = "<-"
 
 	COMMENT_START string = "#" 
+
+	METHOD_DECLARATION string = "method "
+
+	//TYPES
+	//varTypes
 )
 
 //structs
 type actionFunc func(string) (bool,string)
+
 type CmdArgs struct {
 	action actionFunc
 }
@@ -33,7 +39,21 @@ type Data struct {
 	syntacticType string
 }
 
+type AssignmentLinkedList struct {
+	child *Node
+}
+
+type Node struct {
+	data block
+	name string
+}
+
+type block struct {
+	data string
+}
+
 //global variables
+var headNode *Node
 var DataSave map[string]Data
 
 func main() {
@@ -132,11 +152,28 @@ func AssignmentRun(program string) {
 	//the splitting on new line works
 	splitCode := strings.Split(program,"\n")
 
-	for i := 0; i < len(splitCode); i++ {
-		if strings.HasPrefix(splitCode[i],COMMENT_START) {
-			splitCode[i] = ""
+	StaticallyInitialize(splitCode)
+}
+
+func StaticallyInitialize(program []string) {
+	for i := 0; i < len(program); i++ {
+		if strings.HasPrefix(program[i],COMMENT_START) {
+			program[i] = ""
 			continue
 		}
+
+		if strings.HasPrefix(program[i],METHOD_DECLARATION) {
+			parts := []rune(program[i])
+			name := string(parts[len(METHOD_DECLARATION):])
+			temp := strings.Split(name,NORMAL_ASSIGNMENT)
+			name = strings.TrimSpace(temp[0])
+			parameters := strings.TrimSpace(temp[1])
+			declareMethod(name,parameters)
+		}
 	}
+}
+
+func declareMethod (name string,parameters string) {
+
 }
 //...........................................................
