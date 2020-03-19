@@ -8,8 +8,6 @@ import (
 	"io/ioutil"
 )
 
-var userInput string
-
 //put this in another package called cmd.go
 type actionFunc func(string) bool
 type CmdArgs struct {
@@ -52,14 +50,15 @@ func InititializeCMD() [3]CmdArgs{
 
 	return argHandler
 }
+//.....
 
 func main() {
-
+	userInput := ""
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Print("Welcome to VIPER Lang\n> ")
 
-	userInput ,_ := reader.ReadString('\n')
+	userInput ,_ = reader.ReadString('\n')
 	userInput = strings.Replace(userInput, "\n", "", -1)
 
 	argHandler := InititializeCMD()
@@ -84,6 +83,5 @@ func CommenceReading(fileName string) {
 		fmt.Print(ERR)
 		os.Exit(0)
 	}
-	
-	program := data.Split(string(data),"\n")
+	program := string(data)
 }
