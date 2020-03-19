@@ -6,9 +6,42 @@ import (
 	"bufio"
 	"os"
 	"io/ioutil"
-)
 
-//put this in another package called cmd.go till //...
+	//"compiler/cmd"
+)
+//put this in another file called errors or constants
+const (
+	CMD_ARG_ERR string = "INVALID COMMAND"
+)
+//.........................................
+
+func main() {
+	fmt.Println("Welcome to VIPER Lang")
+	for true {
+		userInput := ""
+		reader := bufio.NewReader(os.Stdin)
+
+		fmt.Print("> ")
+
+		userInput ,_ = reader.ReadString('\n')
+		userInput = strings.Replace(userInput, "\n", "", -1)
+
+		argHandler := InititializeCMD()
+		program := Interpret(userInput,argHandler)
+
+		check(program)
+	}
+}
+
+func check(args string) {
+	if args == CMD_ARG_ERR {
+		fmt.Print("\u001B[91m",CMD_ARG_ERR,"\u001B[0m\n")
+	} else {
+		AssignmentRun(args)
+	}
+}
+
+// this should also be in a file called cmd #####################################
 type actionFunc func(string) (bool,string)
 type CmdArgs struct {
 	action actionFunc
@@ -50,36 +83,7 @@ func InititializeCMD() [3]CmdArgs{
 
 	return argHandler
 }
-//.....
 
-func main() {
-	for true {
-		userInput := ""
-		reader := bufio.NewReader(os.Stdin)
-
-		fmt.Print("Welcome to VIPER Lang\n> ")
-
-		userInput ,_ = reader.ReadString('\n')
-		userInput = strings.Replace(userInput, "\n", "", -1)
-
-		argHandler := InititializeCMD()
-		program := Interpret(userInput,argHandler)
-
-		check(program)
-	}
-}
-
-func check(args string) {
-	if strings.hasSuffix(".vpr") {
-		AssignmentRun(args)
-	}
-
-	else{
-		fmt.Print(args,"\n")
-	}
-}
-
-// this should also be in a file called cmd
 func Interpret(input string,argHandler[3] CmdArgs) string{
 	for i := 0; i < len(argHandler); i++ {
 		
@@ -90,24 +94,46 @@ func Interpret(input string,argHandler[3] CmdArgs) string{
 			return data
 		}
 	}
-	return "Unknown command"
+	return CMD_ARG_ERR
 }
 
 func CommenceReading(fileName string) string {
 	data,ERR := ioutil.ReadFile(fileName)
 
 	if ERR != nil {
-		fmt.Print(ERR)
-		os.Exit(0)
+		fmt.Print("\u001B[91m",ERR,"\u001B[0m\n")
+		return ""
 	}
 	program := string(data)
 
 	return program
 }
-//....
+//.............................................................................
 
-//put this code in a file called verifier
-func AssignmentRun(program string) {
+//put this code in a file called verifier#################################
+//const (
+	//PRINTING Syntax 
+//)
 
+type idCheck func(string) bool
+
+type Syntax struct {
+	identity idCheck
+	name string
 }
-//...
+
+func AssignmentRun(program string) {
+	splitCode := strings.Split(program," ")
+
+	for i := 0; i < len(splitCode); i++ {
+		//start_point := 0
+		
+		if strings.HasSuffix(splitCode[i],"\n") {
+			//start_point = i+1
+		}
+
+		//checking if the "__is__" statement is there
+		//if 
+	}
+}
+//...........................................................
