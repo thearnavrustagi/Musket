@@ -44,17 +44,23 @@ type AssignmentLinkedList struct {
 }
 
 type Node struct {
-	data block
+	data Block
 	name string
 }
 
-type block struct {
+type methodNode struct {
+	parameters string
+	data Block
+}
+
+type Block struct {
 	data string
 }
 
 //global variables
 var headNode *Node
 var DataSave map[string]Data
+var methodSave map[string]methodNode
 
 func main() {
 	fmt.Println("Welcome to VIPER Lang")
@@ -163,17 +169,44 @@ func StaticallyInitialize(program []string) {
 		}
 
 		if strings.HasPrefix(program[i],METHOD_DECLARATION) {
+
 			parts := []rune(program[i])
 			name := string(parts[len(METHOD_DECLARATION):])
 			temp := strings.Split(name,NORMAL_ASSIGNMENT)
 			name = strings.TrimSpace(temp[0])
 			parameters := strings.TrimSpace(temp[1])
-			declareMethod(name,parameters)
+
+			declareMethod(name,parameters,program,i)
 		}
 	}
 }
 
-func declareMethod (name string,parameters string) {
+func declareMethod (name string,parameters string,program []string,index int) {
+	elems := []rune(strings.TrimSpace(parameters))
 
+	var startIndex,endIndex int
+
+	for i := 0; i < len(elems); i++ {
+		if elems[i] == '(' {
+			startIndex = i
+			continue
+		}
+
+		if elems[i] == ')' {
+			endIndex = i
+			break
+		}
+	}
+
+	param := string(elems[startIndex+1:endIndex])
+	//block := getBlock(program,index)
+
+	fmt.Println(param)
+
+	//node := methodNode{param,{""}}
+}
+
+func getBlock(program []string,index int) (Block){
+	return Block{}
 }
 //...........................................................
