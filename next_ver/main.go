@@ -9,7 +9,7 @@ import (
 )
 
 //put this in another package called cmd.go till //...
-type actionFunc func(string) bool
+type actionFunc func(string) (bool,string)
 type CmdArgs struct {
 	action actionFunc
 }
@@ -19,33 +19,33 @@ func InititializeCMD() [3]CmdArgs{
 
 	defFile := "lethalityTest.vpr"
 
-	argHandler[0].action = func(args string) bool{
+	argHandler[0].action = func(args string) (bool,string){
 		if (strings.TrimSpace(args) == "run -d") {
-			CommenceReading(defFile)
-			return true
+			str := CommenceReading(defFile)
+			return true,str
 		}
-		return false
+		return false,""
 	}
 
-	argHandler[1].action = func(args string) bool{
+	argHandler[1].action = func(args string) (bool,string){
 
 		if strings.HasPrefix(args,"run ") {
 			parts := []rune(args)
 			fileName := string(parts[4:])
 
-			CommenceReading(fileName)
-			return true
+			str := CommenceReading(fileName)
+			return true,str
 		}
 
-		return false
+		return false,""
 
 	}
 
-	argHandler[2].action = func(args string) bool{
+	argHandler[2].action = func(args string) (bool,string){
 		if args == "quit"||args == "exit" {
 			os.Exit(0)
 		}
-		return false
+		return false,""
 	}
 
 	return argHandler
@@ -53,30 +53,44 @@ func InititializeCMD() [3]CmdArgs{
 //.....
 
 func main() {
-	
-	userInput := ""
-	reader := bufio.NewReader(os.Stdin)
+	for true {
+		userInput := ""
+		reader := bufio.NewReader(os.Stdin)
 
-	fmt.Print("Welcome to VIPER Lang\n> ")
+		fmt.Print("Welcome to VIPER Lang\n> ")
 
-	userInput ,_ = reader.ReadString('\n')
-	userInput = strings.Replace(userInput, "\n", "", -1)
+		userInput ,_ = reader.ReadString('\n')
+		userInput = strings.Replace(userInput, "\n", "", -1)
 
-	argHandler := InititializeCMD()
-	Interpret(userInput,argHandler)
+		argHandler := InititializeCMD()
+		program := Interpret(userInput,argHandler)
+
+		check(program)
+	}
+}
+
+func check(args string) {
+	if strings.hasSuffix(".vpr") {
+		AssignmentRun(args)
+	}
+
+	else{
+		fmt.Print(args,"\n")
+	}
 }
 
 // this should also be in a file called cmd
-func Interpret(input string,argHandler[3] CmdArgs) string {
+func Interpret(input string,argHandler[3] CmdArgs) string{
 	for i := 0; i < len(argHandler); i++ {
 		
-		success := argHandler[i].action(input)
+		success,data := argHandler[i].action(input)
 
 
 		if success {
-			break
+			return data
 		}
 	}
+	return "Unknown command"
 }
 
 func CommenceReading(fileName string) string {
@@ -91,3 +105,7 @@ func CommenceReading(fileName string) string {
 	return program
 }
 //....
+
+func AssignmentRun(program string) {
+	
+}

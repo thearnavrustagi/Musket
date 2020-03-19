@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-type actionFunc func(string) bool
+type actionFunc func(string) (bool,string)
 type CmdArgs struct {
 	action actionFunc
 }
@@ -17,49 +17,52 @@ func InititializeCMD() [3]CmdArgs{
 
 	defFile := "lethalityTest.vpr"
 
-	argHandler[0].action = func(args string) bool{
+	argHandler[0].action = func(args string) (bool,string){
 		if (strings.TrimSpace(args) == "run -d") {
-			CommenceReading(defFile)
-			return true
+			str := CommenceReading(defFile)
+			return true,str
 		}
-		return false
+		return false,""
 	}
 
-	argHandler[1].action = func(args string) bool{
+	argHandler[1].action = func(args string) (bool,string){
 
 		if strings.HasPrefix(args,"run ") {
 			parts := []rune(args)
 			fileName := string(parts[4:])
 
-			CommenceReading(fileName)
-			return true
+			str := CommenceReading(fileName)
+			return true,str
 		}
 
-		return false
+		return false,""
 
 	}
 
-	argHandler[2].action = func(args string) bool{
+	argHandler[2].action = func(args string) (bool,string){
 		if args == "quit"||args == "exit" {
 			os.Exit(0)
 		}
-		return false
+		return false,""
 	}
 
 	return argHandler
 }
 
-func Interpret(input string,argHandler[3] CmdArgs) {
+func Interpret(input string,argHandler[3] CmdArgs) string{
 	for i := 0; i < len(argHandler); i++ {
-		success := argHandler[i].action(input)
+		
+		success,data := argHandler[i].action(input)
+
 
 		if success {
-			os.Exit(0)
+			return data
 		}
 	}
+	return "Unknown command"
 }
 
-func CommenceReading(fileName string) string{
+func CommenceReading(fileName string) string {
 	data,ERR := ioutil.ReadFile(fileName)
 
 	if ERR != nil {
@@ -67,6 +70,6 @@ func CommenceReading(fileName string) string{
 		os.Exit(0)
 	}
 	program := string(data)
+
 	return program
 }
-
