@@ -1,5 +1,6 @@
 # VIPER
 ## VIPER SYNTAX (or general syntax)<br>
+code is in developement stage please wait for a release
  The language is as follows
 ```python
 __________VIPER_____________
