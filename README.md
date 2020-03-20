@@ -2,48 +2,54 @@
 ## V1PER SYNTAX (or general syntax)<br>
  The language is as follows
 ```java 
-________V1PER_________             ________JAVA______ 
+__________VIPER_____________
+method main = (){ # comment
+	var x = 20
+	var a,b,c = 10,15,17
+	x = 30
+	print "okay a is {a}|{b}|{c}|{x}\n" # the \n is compulsory
+	add <- (a,b)
+}
 
- type = [INTEGER]                   //no equivalent syntax
- x = input[type]                    int x = //bufferedreader input;
- y = input[type]                    int y = //scanner input;
- sum is "z = x + y"                 //no equivalent syntax except functions
+method add = (a,b){
+	return a+b
+}
+ ```
+ ```java
+ ___________JAVA____________
+ public static void main() {
+ 	int x=20;
+	int a = 10,b=15,c=17;
+	x = 30;
+	System.out.println("okay a is "+a+"|"+b+"|"+c+"|"+x)
+ }
  
- sum                                int z = x+y;
- 
- str = "haha"                       String str = "haha";
- bol = true                         boolean bol = true;
-                                                                                 
- (the sum is {z}\n)               System.out.println("the sum is "+z);
- if sum>1{                        if(sum>1){
-   (greater than {one}\n)             System.out.println("greater then "+one);
-	}                                  }
- else {                             else{
-   (not greater than {one}\n)          System.out.println("not greater than "+one);
- }                                  }
+ public void add(int a,int b) {
+ 	return a+b
+ }
  ```
  #### the whole syntax is not made but here are the parts that are made<br>
  PRESENT SYNTAX <br>
  - [ ] SYNTAX<br>
    - [x] normal assignment
-   - [ ] forced assignment
+   - [x] forced assignment
    - [X] printing                      
    - [ ] user input                    
    - [ ] type variables                
    - [ ] if/else                       
    - [ ] while                         
 - [ ] OPERATORS<br>
-  - [x] arithmatic                    
+  - [ ] arithmatic                    
   - [ ] logical                       
   - [ ] relational                    
   - [ ] bitwise                       
 - [ ] PROGRAMMING FEATURES<br>
   - [ ] Procedural programming        
   - [ ] Object Oriented Programming   
-  - [ ] Functional Programming   
+  - [x] Functional Programming   
   - [ ] Variable Syntax
   - [ ] Smart Interpreter
-- [ ] ERROR_HANDELING
+- [x] ERROR_HANDELING
  
 ## About the file<br><br>
 As of now there is no fancy extension just a normal txt file as the language is useless right now and yes the file should be in the same directory<br><br>
