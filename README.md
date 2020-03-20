@@ -88,13 +88,13 @@ Well the one which I just developed is called var syntax
 ## About the file<br><br>
 the extension for the file should be .vpr<br><br>
 ## How to run<br>
-open the terminal or ide and compile and run the java code then it will ask for an argument "> " then just type in "run fileName.txt", the file should be in the same directory as compiler, if you want quicker access then modify the SnekTest.txt and type "runD" as it is set to default path <br>type quit or control-c to exit<br><br>
+open the terminal or ide and compile and run the go code then it will ask for an argument "> " then just type in "run fileName.vpr", the file should be in the same directory as the file or pwd(present working directory), if you want quicker access then modify the lethalityTest.vpr and type "run -d" as it is set to default path <br>type quit or control-c to exit<br><br>
 ## The code<br>
-I have tried an OOP approach in this compiler instead of the traditional approach of using trees(okay I had to use trees for the assignment) and I feel now that it will ease further developement as adding new features would just be a matter of adding enums and class which can or can not be easier than the tree approach it can be buggy<br><br>
+Very simple clunky POP approach (believe me OOP is ammazing this POP almost killed me) but it has scope for improvement because after this I have to arrange it into packages then it will have amazing scalability
 ### Version 0.5 (B3TA)<br>
 What you see up there is the DESIRED syntax I have handled basics such as printing and assignment but the if else is under developement 
 <br><br>
 ### About the name<br>
-well the name comes from the fact that i have created a language with smaller and easier syntax than python<br><br>
+well the name comes from the fact that i have created a language with robust and small syntax like python<br>It was named Snek initially but some friend of mine told me it was a sloppy name<br><br>
 #### future of the language<br>
 [click here](https://argon-sodium-vanadium.imfast.io/snekLang.html)
