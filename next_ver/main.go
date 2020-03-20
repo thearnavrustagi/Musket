@@ -21,6 +21,7 @@ const (
 	COMMENT_START string = "#" 
 
 	METHOD_DECLARATION string = "method "
+	VAR_DECALRATION string = "var "
 
 	//TYPES
 	//varTypes
@@ -54,7 +55,7 @@ type methodNode struct {
 }
 
 type Block struct {
-	data string
+	data []string
 }
 
 //global variables
@@ -181,6 +182,10 @@ func StaticallyInitialize(program []string) {
 
 			declareMethod(name,parameters,program,i)
 		}
+
+		if strings.HasPrefix(program[i],VAR_DECALRATION) {
+			
+		}
 	}
 }
 
@@ -209,7 +214,36 @@ func declareMethod (name string,parameters string,program []string,index int) {
 	methodSave[name] = node
 }
 
-func getBlock(program []string,index int) (Block){
-	return Block{}
+func getBlock(program []string,startIndex int) (Block){
+	num_of_nested_blocks := 0
+	endIndex := startIndex
+
+	for i := startIndex; i < len(program); i++ {
+		program[i] = strings.TrimSpace(program[i])
+		elems := []rune(program[i])
+
+		for j := 0; j < len(elems); j++ {
+			
+			if elems[j] == '#' {
+				break
+			} 
+			
+			if elems[j] == '{' {
+				num_of_nested_blocks++
+				continue
+			}
+			
+			if elems[j] == '}' {
+				num_of_nested_blocks--
+			}
+		}
+
+		if num_of_nested_blocks == 0 {
+			endIndex = i
+			break
+		}
+	}
+	snippet := program[startIndex+1:endIndex]
+	return Block{snippet}
 }
 //...........................................................
