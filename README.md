@@ -15,7 +15,7 @@ method main = (){ # comment
 	add <- (a,b)
 }
 
-var something -> {
+var something <- {
 	print "hello"
 	var = {subtract}
 }
