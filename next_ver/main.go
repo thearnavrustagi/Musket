@@ -480,7 +480,6 @@ func replaceVars (statement string) (string){
 			name = make([]rune,0)
 		}
 	}
-
 	return statement
 }
 
