@@ -452,7 +452,7 @@ func print(statement string) {
 	statement = strings.TrimSpace(statement)
 	statement = string([]rune(statement)[len(PRINTING)+1:len(statement)-1])
 	statement = replaceVars(statement)
-	fmt.Println(statement)
+	fmt.Print(statement)
 }
 
 func replaceVars (statement string) (string){
