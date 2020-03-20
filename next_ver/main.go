@@ -219,11 +219,9 @@ func StaticallyInitialize(program []string) {
 		}
 
 		if declarable(program[i]) {
-			declare(program[i],program,i)
+			declare(program[i],program,i,true)
 		}
 	}
-
-	fmt.Println(methodNames)
 
 	if buldFailure == true {
 		fmt.Println("\u001B[40m\u001B[91m",BUILD_FAIL_ERR,"\u001B[0m")
@@ -304,7 +302,7 @@ func declarable (line string) (bool) {
 	return strings.HasPrefix(line,VAR_DECALRATION)
 }
 
-func declare (line string,program []string,i int) {
+func declare (line string,program []string,i int,check bool) {
 	if strings.HasPrefix(line,VAR_DECALRATION) {
 		parts := []rune(line)
 		name := string(parts[len(VAR_DECALRATION):])
@@ -331,9 +329,9 @@ func declare (line string,program []string,i int) {
 				buldFailure = true
 			}
 			if len(allValues) == 1 {
-				assignToAll(allVarNames,allValues[0],i,true)
+				assignToAll(allVarNames,allValues[0],i,check)
 			} else {
-				assignAll(allVarNames,allValues,i,true)
+				assignAll(allVarNames,allValues,i,check)
 			}
 		}
 	}
@@ -341,7 +339,6 @@ func declare (line string,program []string,i int) {
 
 func declareVarSyntax(name string,program []string,index int) ([]string){	
 	block,endIndex := getBlock(program,index,'{','}')
-	fmt.Println("saving:\t",block)
 	varSyntaxSave[name] = VarSyntaxData{block}
 	varSyntaxNames = append(varSyntaxNames,name)
 
@@ -351,12 +348,9 @@ func declareVarSyntax(name string,program []string,index int) ([]string){
 }
 
 func StartExecution() {
-	fmt.Println(varSyntaxSave)
 	for i := 0; i < len(methodNames); i++ {
-		fmt.Println("trying")
-		methodSave[methodNames[i]] = MethodData{methodSave[methodNames[i]].parameters , Block{replaceSpecialSyntax(methodSave[methodNames[i]].data.data)} }
+		methodSave[methodNames[i]] = MethodData{ methodSave[methodNames[i]].parameters , Block{replaceSpecialSyntax(methodSave[methodNames[i]].data.data) } }
 	}
-	fmt.Println(methodSave["main"].data.data)
 	err := callFunctionMAIN()
 	if err != "" {
 		fmt.Println("\u001B[40m\u001B[91m",err,"\u001B[0m\n")
@@ -371,6 +365,7 @@ func replaceSpecialSyntax(program []string) ([]string){
 			program = Insert(program,name,value)
 		}
 	}
+
 	return program
 }
 
@@ -397,17 +392,16 @@ func Insert(program []string,name string,value []string) []string{
 }
 
 func moveRight (program []string,index int,times int) []string{
-	temp := ""
-	for i:= 0;i<=times;i++ {
-		fmt.Println("itr:",(i+1),"\t",program,"\n")
-
-		tempx :=  program[i+1]
-		program[i] = temp
-		program[i+1] = program[i]
-		temp = tempx
+	output := make([]string,len(program)-times)
+	for i:= 1;i<index;i++ {
+		output[i] = program[i]
+	}
+	for i := len(program)-1;i>times;i-- {
+		output = append(output,program[i])
 	}
 
-	return program
+
+	return output
 }
 
 func callFunctionMAIN() (string){
@@ -424,7 +418,7 @@ func (data MethodData) runThrough () {
 	for i := 0; i < len(program); i++ {
 
 		if declarable(program[i]) {
-			declare(program[i],program,i)
+			declare(program[i],program,i,false)
 		}
 		
 		if assignable(program[i]) {
