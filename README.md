@@ -1,5 +1,5 @@
-# V1PER
-## V1PER SYNTAX (or general syntax)<br>
+# VIPER
+## VIPER SYNTAX (or general syntax)<br>
  The language is as follows
 ```java 
 __________VIPER_____________
@@ -52,7 +52,7 @@ method add = (a,b){
 - [x] ERROR_HANDELING
  
 ## About the file<br><br>
-As of now there is no fancy extension just a normal txt file as the language is useless right now and yes the file should be in the same directory<br><br>
+the extension for the file should be .vpr<br><br>
 ## How to run<br>
 open the terminal or ide and compile and run the java code then it will ask for an argument "> " then just type in "run fileName.txt", the file should be in the same directory as compiler, if you want quicker access then modify the SnekTest.txt and type "runD" as it is set to default path <br>type quit or control-c to exit<br><br>
 ## The code<br>
