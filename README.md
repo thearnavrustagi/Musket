@@ -8,8 +8,16 @@ method main = (){ # comment
 	var x = 20
 	var a,b,c = 10,15,17
 	x = 30
+
+	something
+
 	print "okay a is {a}|{b}|{c}|{x}\n" # the \n is compulsory
 	add <- (a,b)
+}
+
+var something -> {
+	print "hello"
+	var = {subtract}
 }
 
 method add = (a,b){
@@ -48,10 +56,35 @@ method add = (a,b){
   - [ ] Procedural programming        
   - [ ] Object Oriented Programming   
   - [x] Functional Programming   
-  - [ ] Variable Syntax
+  - [x] Variable Syntax
   - [ ] Smart Interpreter
 - [x] ERROR_HANDELING
- 
+## Unique Features !!!
+Well the one which I just developed is called var syntax
+- **VAR_SYNTAX**<br>
+  well this is basically that you assign a variable like this
+  ```python
+  var [var_name] <- {
+  	# body
+  }
+  ```
+  and this should be outside a method<br>
+  to call this you just have to write its name in the main method like so
+  ```python
+  [var_name]
+  ```
+  on being called the place where the name was will be changed by its body now why I say changes well let me give you an example
+  ```python
+  method main = (){
+  	var a,b = 20,30
+	add
+	print "the sum of a and b is {c}"
+  }
+  var add <- {
+  	var c = a + b 
+  }
+  ```
+  yes this is eligible syntax but will not work right now well because I have not handled the calculation part and the function calling part
 ## About the file<br><br>
 the extension for the file should be .vpr<br><br>
 ## How to run<br>
