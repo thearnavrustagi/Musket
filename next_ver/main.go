@@ -26,10 +26,11 @@ const (
 
 	COMMENT_START string = "#"
 
-	METHOD_DECLARATION string = "method "
+	METHOD_DECLARATION string = "method"
 	VAR_DECALRATION string = "var "
 
-	//important_
+	//special syntax
+	PRINTING string = "print "
 
 )
 //structs
@@ -288,7 +289,6 @@ func StartExecution(program []string) {
 	if err != "" {
 		fmt.Println("\u001B[40m\u001B[91m",err,"\u001B[0m\n")
 	}
-	fmt.Println(varSave)
 }
 
 func callFunctionMAIN() (string){
@@ -318,6 +318,8 @@ func (data MethodData) runThrough () {
 				continue
 			}
 		}
+
+		checkSpecialSyntax(program[i])
 	}
 }
 
@@ -402,8 +404,8 @@ func declareVarSyntax(name string,program []string,index int) {
 
 func assignToAll(varNames []string,value string,index int,check bool) {
 	data := compute(value)
-	fmt.Println(data," ",varNames)
 	for i := 0; i < len(varNames); i++ {
+		varNames[i] = strings.TrimSpace(varNames[i])
 		if strings.HasPrefix(varNames[i],VAR_DECALRATION) {
 			fmt.Println(varNames[i])
 			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
@@ -415,8 +417,8 @@ func assignToAll(varNames []string,value string,index int,check bool) {
 	}
 }
 func assignAll(varNames []string,varValues []string,index int,check bool) {
-	fmt.Println("name:\t",varNames)
 	for i := 0; i < len(varNames); i++ {
+		varNames[i] = strings.TrimSpace(varNames[i])
 		if strings.HasPrefix(varNames[i],VAR_DECALRATION) {
 			fmt.Println(varNames[i])
 			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
@@ -438,6 +440,48 @@ func testVarDeclaration(name string) bool{
 	}
 
 	return false
+}
+
+func checkSpecialSyntax(line string) {
+	if strings.HasPrefix(line,PRINTING) {
+		print(line)
+	}
+}
+
+func print(statement string) {
+	statement = strings.TrimSpace(statement)
+	statement = string([]rune(statement)[len(PRINTING)+1:len(statement)-1])
+	statement = replaceVars(statement)
+	fmt.Println(statement)
+}
+
+func replaceVars (statement string) (string){
+	chars := []rune(" "+statement)
+	var name []rune
+	var appendable bool
+	var startIndex,endIndex int
+
+	for i := 0; i < len(chars); i++ {
+		if appendable {
+			name = append(name,chars[i])
+		}
+		if chars[i] == '{'{
+			appendable = true
+			startIndex = i
+		}
+
+		if chars[i] == '}'  {
+			appendable = false
+			endIndex = i+1
+			varName := string(chars[startIndex:endIndex])
+			pureName := string([]rune(varName)[1:len(varName)-1])
+			value := varSave[pureName]
+			statement = strings.Replace(statement,varName,value.value,1)
+			name = make([]rune,0)
+		}
+	}
+
+	return statement
 }
 
 //compute is incomplete ##########################################3
