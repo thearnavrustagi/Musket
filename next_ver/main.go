@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"os"
 	"io/ioutil"
+	"strconv"
 
 	//"compiler/cmd"
 )
@@ -15,6 +16,7 @@ const (
 	METHOD_DECLARATION_ERR string = "The '{' token should not have any following token except new line feed or space"
 	INSUFFICIENT_VARS_ERR string = "the number of vars on the lhs dont match with the values on the rhs"
 	ALREADY_DECLARED_ERR string = "the variables have already been declared please remove the \"var\" specifier"
+	MAIN_MISSING_ERR string = "FATAL ERROR\nMETHOD MAIN IS MISSING"
 	BUILD_FAIL_ERR string = "FATAL ERROR\nBUILD FAILED"
 
 	//syntax
@@ -22,20 +24,30 @@ const (
 	NORMAL_ASSIGNMENT string = "="
 	SYNTACTIC_ASSIGNMENT string = "<-"
 
-	COMMENT_START string = "#" 
+	COMMENT_START string = "#"
 
 	METHOD_DECLARATION string = "method "
 	VAR_DECALRATION string = "var "
 
-	//TYPES
-	//varTypes
-)
+	//important_
 
+)
 //structs
 type actionFunc func(string) (bool,string)
+type arith func(string,string) (string)
+
+func StrToInt(str string) (int, error) {
+    nonFractionalPart := strings.Split(str, ".")
+    return strconv.Atoi(nonFractionalPart[0])
+}
 
 type CmdArgs struct {
 	action actionFunc
+}
+
+type ArithExpression struct {
+	representation string
+	action arith
 }
 
 type Node struct {
@@ -76,7 +88,8 @@ var buldFailure bool
 
 func main() {
 	fmt.Println("Welcome to VIPER Lang")
-
+	argHandler := InititializeCMD()
+	
 	for true {
 		methodSave = make(map[string]MethodData)
 		varSave = make(map[string]Data)
@@ -88,8 +101,6 @@ func main() {
 
 		userInput ,_ = reader.ReadString('\n')
 		userInput = strings.Replace(userInput, "\n", "", -1)
-
-		argHandler := InititializeCMD()
 		program := Interpret(userInput,argHandler)
 
 		startExec(program)
@@ -197,42 +208,13 @@ func StaticallyInitialize(program []string) {
 			declareMethod(name,parameters,program,i)
 		}
 
-		if strings.HasPrefix(program[i],VAR_DECALRATION) {
-			parts := []rune(program[i])
-			name := string(parts[len(VAR_DECALRATION):])
-
-			if strings.Contains(name,SYNTACTIC_ASSIGNMENT) {
-				temp := strings.Split(name,SYNTACTIC_ASSIGNMENT)
-				name = strings.TrimSpace(temp[0])
-				if testVarDeclaration(name) {
-					fmt.Println("\u001B[40m\u001B[91m",ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",i+1)
-					buldFailure = true
-				}
-				declareVarSyntax(name,program,i)
-				continue
-			}
-
-			if strings.Contains(name,NORMAL_ASSIGNMENT) {
-				temp := strings.Split(name,NORMAL_ASSIGNMENT)
-				allVarNames := strings.Split(temp[0],",")
-				
-				allValues := strings.Split(temp[1],",")
-
-				if (len(allVarNames) != len(allValues)) && (len(allValues) != 1){
-
-					fmt.Println("\u001B[40m\u001B[91m",INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
-					buldFailure = true
-				}
-
-				if len(allValues) == 1 {
-					assignToAll(allVarNames,allValues[0],i)
-				}
-			}
-		}
+		
 	}
 
 	if buldFailure == true {
 		fmt.Println("\u001B[40m\u001B[91m",BUILD_FAIL_ERR,"\u001B[0m")
+	} else {
+		StartExecution(program)
 	}
 }
 
@@ -300,6 +282,117 @@ func getBlock(program []string,startIndex int,start rune,end rune) (Block){
 	return Block{snippet}
 }
 
+
+func StartExecution(program []string) {
+	err := callFunctionMAIN()
+	if err != "" {
+		fmt.Println("\u001B[40m\u001B[91m",err,"\u001B[0m\n")
+	}
+	fmt.Println(varSave)
+}
+
+func callFunctionMAIN() (string){
+	data := methodSave["main"]
+	if len(data.data.data) == 0 {
+		return MAIN_MISSING_ERR
+	}
+	data.runThrough()
+	return ""
+}
+
+func (data MethodData) runThrough () {
+	program := data.data.data
+	for i := 0; i < len(program); i++ {
+		if declarable(program[i]) {
+			declare(program[i],program,i)
+			continue
+		}
+		if assignable(program[i]) {
+			if strings.Contains(program[i],NORMAL_ASSIGNMENT) {
+				assign(program,NORMAL_ASSIGNMENT,i)
+				continue
+			}
+
+			if strings.Contains(program[i],SYNTACTIC_ASSIGNMENT) {
+				assign(program,SYNTACTIC_ASSIGNMENT,i)
+				continue
+			}
+		}
+	}
+}
+
+func declarable (line string) (bool) {
+	return strings.HasPrefix(line,VAR_DECALRATION)
+}
+
+func declare (line string,program []string,i int) {
+	if strings.HasPrefix(line,VAR_DECALRATION) {
+		parts := []rune(line)
+		name := string(parts[len(VAR_DECALRATION):])
+
+		if strings.Contains(name,SYNTACTIC_ASSIGNMENT) {
+			temp := strings.Split(name,SYNTACTIC_ASSIGNMENT)
+			name = strings.TrimSpace(temp[0])
+			if testVarDeclaration(name) {
+				fmt.Println("\u001B[40m\u001B[91m",ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",i+1)
+				buldFailure = true
+			}
+			declareVarSyntax(name,program,i)
+			return
+		}
+
+		if strings.Contains(name,NORMAL_ASSIGNMENT) {
+			temp := strings.Split(name,NORMAL_ASSIGNMENT)
+			allVarNames := strings.Split(temp[0],",")
+			allValues := strings.Split(temp[1],",")
+
+			if (len(allVarNames) != len(allValues)) && (len(allValues) != 1){
+
+				fmt.Println("\u001B[40m\u001B[91m",INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
+				buldFailure = true
+			}
+			if len(allValues) == 1 {
+				assignToAll(allVarNames,allValues[0],i,true)
+			} else {
+				assignAll(allVarNames,allValues,i,true)
+			}
+		}
+	}
+}
+
+func assignable(line string) (bool) {
+	return (strings.Contains(line,NORMAL_ASSIGNMENT) || strings.Contains(line,SYNTACTIC_ASSIGNMENT))
+}
+
+func assign (program []string,assignmentType string,i int) {
+	line := program[i]
+	if assignmentType == SYNTACTIC_ASSIGNMENT {
+		temp := strings.Split(line,SYNTACTIC_ASSIGNMENT)
+		name := strings.TrimSpace(temp[0])
+		if testVarDeclaration(name) {
+			fmt.Println("\u001B[40m\u001B[91m",ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",i+1)
+			buldFailure = true
+		}
+
+		declareVarSyntax(name,program,i)
+		return
+	}
+
+	if assignmentType == NORMAL_ASSIGNMENT {
+		temp := strings.Split(line,NORMAL_ASSIGNMENT)
+		allVarNames := strings.Split(temp[0],",")
+		allValues := strings.Split(temp[1],",")
+
+		if (len(allVarNames) != len(allValues)) && (len(allValues) != 1){
+			fmt.Println("\u001B[40m\u001B[91m",INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
+		}
+		if len(allValues) == 1 {
+			assignToAll(allVarNames,allValues[0],i,false)
+		} else {
+			assignAll(allVarNames,allValues,i,false)
+		}
+	}
+}
 func declareVarSyntax(name string,program []string,index int) {	
 	block := getBlock(program,index,'{','}')
 	varSyntaxSave[name] = VarSyntaxData{block}
@@ -307,12 +400,31 @@ func declareVarSyntax(name string,program []string,index int) {
 }
 
 
-func assignToAll(varNames []string,value string,index int) {
+func assignToAll(varNames []string,value string,index int,check bool) {
 	data := compute(value)
+	fmt.Println(data," ",varNames)
 	for i := 0; i < len(varNames); i++ {
-		if testVarDeclaration(varNames[i]) {
+		if strings.HasPrefix(varNames[i],VAR_DECALRATION) {
+			fmt.Println(varNames[i])
+			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
+		}
+		if testVarDeclaration(varNames[i]) && check{
 			fmt.Println("\u001B[40m\u001B[91m",ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",index+1)
 		}
+		varSave[varNames[i]] = data
+	}
+}
+func assignAll(varNames []string,varValues []string,index int,check bool) {
+	fmt.Println("name:\t",varNames)
+	for i := 0; i < len(varNames); i++ {
+		if strings.HasPrefix(varNames[i],VAR_DECALRATION) {
+			fmt.Println(varNames[i])
+			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
+		}
+		if testVarDeclaration(varNames[i]) && check{
+			fmt.Println("\u001B[40m\u001B[91m",ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",index+1)
+		}
+		data := compute(varValues[i])
 		varSave[varNames[i]] = data
 	}
 }
@@ -328,7 +440,13 @@ func testVarDeclaration(name string) bool{
 	return false
 }
 
-
+//compute is incomplete ##########################################3
 func compute(value string) (Data) {
+	value =  strings.TrimSpace(value)
+	elems := strings.Split(value," ")
+	if len(elems) == 1 || strings.HasPrefix(value,"\"") && strings.HasSuffix(value,"\""){
+		return Data{value}
+	}
+	
 	return Data{}
 }
