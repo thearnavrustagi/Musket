@@ -11,7 +11,11 @@ import (
 )
 const (
 	//errors
-	CMD_ARG_ERR string= "INVALID COMMAND"
+	CMD_ARG_ERR string= "\u001B[40m\u001B[91mINVALID COMMAND\u001B[0m\n"
+	METHOD_DECLARATION_ERR string = "The '{' token should not have any following token except new line feed or space"
+	INSUFFICIENT_VARS_ERR string = "the number of vars on the lhs dont match with the values on the rhs"
+	ALREADY_DECLARED_ERR string = "the variables have already been declared please remove the \"var\" specifier"
+	BUILD_FAIL_ERR string = "FATAL ERROR\nBUILD FAILED"
 
 	//syntax
 	FUNCTION_PARAM string = "<-"
@@ -34,27 +38,25 @@ type CmdArgs struct {
 	action actionFunc
 }
 
-type Data struct {
-	dataType string
+type Node struct {
 	value string
-	syntacticType string
+	childAction string
 }
 
 type AssignmentLinkedList struct {
 	child *Node
 }
 
-type Node struct {
-	data Block
-	name string
+type Data struct {
+	value string
 }
 
-type MethodNode struct {
+type MethodData struct {
 	parameters string
 	data Block
 }
 
-type VarSyntaxNode struct {
+type VarSyntaxData struct {
 	data Block
 }
 
@@ -64,22 +66,25 @@ type Block struct {
 
 //global variables
 var headNode *Node
+
 var varSave map[string]Data
-var varSyntaxSave map[string]VarSyntaxNode
+var varSyntaxSave map[string]VarSyntaxData
 var varSyntaxNames []string
-var methodSave map[string]MethodNode
+var methodSave map[string]MethodData
+
+var buldFailure bool
 
 func main() {
 	fmt.Println("Welcome to VIPER Lang")
-	methodSave = make(map[string]MethodNode)
-	varSave = make(map[string]Data)
-	varSyntaxSave = make(map[string]VarSyntaxNode)
 
 	for true {
+		methodSave = make(map[string]MethodData)
+		varSave = make(map[string]Data)
+		varSyntaxSave = make(map[string]VarSyntaxData)
 		userInput := ""
 		reader := bufio.NewReader(os.Stdin)
 
-		fmt.Print("> ")
+		fmt.Print("\u001B[92m> \u001B[0m")
 
 		userInput ,_ = reader.ReadString('\n')
 		userInput = strings.Replace(userInput, "\n", "", -1)
@@ -134,7 +139,7 @@ func CommenceReading(fileName string) string {
 	data,ERR := ioutil.ReadFile(fileName)
 
 	if ERR != nil {
-		fmt.Print("\u001B[91m",ERR,"\u001B[0m\n")
+		fmt.Print("\u001B[40m\u001B[91m",ERR,"\u001B[0m\n")
 		return ""
 	}
 	program := string(data)
@@ -159,7 +164,7 @@ func Interpret(input string,argHandler[3] CmdArgs) string{
 //
 func startExec(args string) {
 	if args == CMD_ARG_ERR {
-		fmt.Print("\u001B[91m",CMD_ARG_ERR,"\u001B[0m\n")
+		fmt.Print(CMD_ARG_ERR)
 	} else {
 		AssignmentRun(args)
 	}
@@ -198,11 +203,36 @@ func StaticallyInitialize(program []string) {
 
 			if strings.Contains(name,SYNTACTIC_ASSIGNMENT) {
 				temp := strings.Split(name,SYNTACTIC_ASSIGNMENT)
-				name = strings.TrimSpace(temp[1])
-				fmt.Print("name :\t",name)
+				name = strings.TrimSpace(temp[0])
+				if testVarDeclaration(name) {
+					fmt.Println("\u001B[40m\u001B[91m",ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",i+1)
+					buldFailure = true
+				}
 				declareVarSyntax(name,program,i)
+				continue
+			}
+
+			if strings.Contains(name,NORMAL_ASSIGNMENT) {
+				temp := strings.Split(name,NORMAL_ASSIGNMENT)
+				allVarNames := strings.Split(temp[0],",")
+				
+				allValues := strings.Split(temp[1],",")
+
+				if (len(allVarNames) != len(allValues)) && (len(allValues) != 1){
+
+					fmt.Println("\u001B[40m\u001B[91m",INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
+					buldFailure = true
+				}
+
+				if len(allValues) == 1 {
+					assignToAll(allVarNames,allValues[0],i)
+				}
 			}
 		}
+	}
+
+	if buldFailure == true {
+		fmt.Println("\u001B[40m\u001B[91m",BUILD_FAIL_ERR,"\u001B[0m")
 	}
 }
 
@@ -226,7 +256,7 @@ func declareMethod (name string,parameters string,program []string,index int) {
 	param := string(elems[startIndex+1:endIndex])
 	block := getBlock(program,index,'{','}')
 
-	node := MethodNode{param,block}
+	node := MethodData{param,block}
 
 	methodSave[name] = node
 }
@@ -261,14 +291,44 @@ func getBlock(program []string,startIndex int,start rune,end rune) (Block){
 			break
 		}
 	}
+	if (startIndex == endIndex) {
+		fmt.Println("\u001B[40m\u001B[91m",METHOD_DECLARATION_ERR,"\u001B[0m\n","line:\t",startIndex+1)
+		buldFailure = true
+		return Block{}
+	}
 	snippet := program[startIndex+1:endIndex]
 	return Block{snippet}
 }
 
-func declareVarSyntax(name string,program []string,index int) {
-	//this was done as the getBlock method would fail with similar args and was not accurate
+func declareVarSyntax(name string,program []string,index int) {	
 	block := getBlock(program,index,'{','}')
-	fmt.Println("here",name,"\n",block)
-	varSyntaxSave[name] = VarSyntaxNode{block}
+	varSyntaxSave[name] = VarSyntaxData{block}
 	varSyntaxNames = append(varSyntaxNames,name)
+}
+
+
+func assignToAll(varNames []string,value string,index int) {
+	data := compute(value)
+	for i := 0; i < len(varNames); i++ {
+		if testVarDeclaration(varNames[i]) {
+			fmt.Println("\u001B[40m\u001B[91m",ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",index+1)
+		}
+		varSave[varNames[i]] = data
+	}
+}
+
+func testVarDeclaration(name string) bool{
+	t1 := varSyntaxSave[name].data.data
+	t2 := string(varSave[name].value)
+
+	if (len(t1) != 0 || t2 != ""){
+		return true
+	}
+
+	return false
+}
+
+
+func compute(value string) (Data) {
+	return Data{}
 }
