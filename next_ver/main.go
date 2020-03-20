@@ -569,5 +569,5 @@ func compute(value string) (Data) {
 		return Data{value}
 	}
 	
-	return Data{}
+	return Data{} 
 }
