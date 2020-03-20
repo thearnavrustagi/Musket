@@ -84,6 +84,7 @@ var varSave map[string]Data
 var varSyntaxSave map[string]VarSyntaxData
 var varSyntaxNames []string
 var methodSave map[string]MethodData
+var methodNames []string
 
 var buldFailure bool
 
@@ -95,6 +96,7 @@ func main() {
 		methodSave = make(map[string]MethodData)
 		varSave = make(map[string]Data)
 		varSyntaxSave = make(map[string]VarSyntaxData)
+
 		userInput := ""
 		reader := bufio.NewReader(os.Stdin)
 
@@ -105,6 +107,13 @@ func main() {
 		program := Interpret(userInput,argHandler)
 
 		startExec(program)
+
+		varSyntaxSave = nil
+		methodSave = nil
+		varSyntaxSave = nil
+		methodNames = nil
+		varSyntaxNames = nil
+		buldFailure = false
 	}
 }
 
@@ -209,13 +218,17 @@ func StaticallyInitialize(program []string) {
 			declareMethod(name,parameters,program,i)
 		}
 
-		
+		if declarable(program[i]) {
+			declare(program[i],program,i)
+		}
 	}
+
+	fmt.Println(methodNames)
 
 	if buldFailure == true {
 		fmt.Println("\u001B[40m\u001B[91m",BUILD_FAIL_ERR,"\u001B[0m")
 	} else {
-		StartExecution(program)
+		StartExecution()
 	}
 }
 
@@ -237,14 +250,16 @@ func declareMethod (name string,parameters string,program []string,index int) {
 	}
 
 	param := string(elems[startIndex+1:endIndex])
-	block := getBlock(program,index,'{','}')
+	block,_ := getBlock(program,index,'{','}')
 
 	node := MethodData{param,block}
 
 	methodSave[name] = node
+
+	methodNames = append(methodNames,name)
 }
 
-func getBlock(program []string,startIndex int,start rune,end rune) (Block){
+func getBlock(program []string,startIndex int,start rune,end rune) (Block,int){
 	num_of_nested_blocks := 0
 	endIndex := startIndex
 
@@ -277,52 +292,14 @@ func getBlock(program []string,startIndex int,start rune,end rune) (Block){
 	if (startIndex == endIndex) {
 		fmt.Println("\u001B[40m\u001B[91m",METHOD_DECLARATION_ERR,"\u001B[0m\n","line:\t",startIndex+1)
 		buldFailure = true
-		return Block{}
+		return Block{},startIndex
 	}
-	snippet := program[startIndex+1:endIndex]
-	return Block{snippet}
-}
-
-
-func StartExecution(program []string) {
-	err := callFunctionMAIN()
-	if err != "" {
-		fmt.Println("\u001B[40m\u001B[91m",err,"\u001B[0m\n")
+	snippet := make([]string,endIndex-startIndex)
+	for i := startIndex; i <endIndex; i++ {
+		snippet[i-startIndex] = program[i]
 	}
+	return Block{snippet},endIndex
 }
-
-func callFunctionMAIN() (string){
-	data := methodSave["main"]
-	if len(data.data.data) == 0 {
-		return MAIN_MISSING_ERR
-	}
-	data.runThrough()
-	return ""
-}
-
-func (data MethodData) runThrough () {
-	program := data.data.data
-	for i := 0; i < len(program); i++ {
-		if declarable(program[i]) {
-			declare(program[i],program,i)
-			continue
-		}
-		if assignable(program[i]) {
-			if strings.Contains(program[i],NORMAL_ASSIGNMENT) {
-				assign(program,NORMAL_ASSIGNMENT,i)
-				continue
-			}
-
-			if strings.Contains(program[i],SYNTACTIC_ASSIGNMENT) {
-				assign(program,SYNTACTIC_ASSIGNMENT,i)
-				continue
-			}
-		}
-
-		checkSpecialSyntax(program[i])
-	}
-}
-
 func declarable (line string) (bool) {
 	return strings.HasPrefix(line,VAR_DECALRATION)
 }
@@ -362,6 +339,111 @@ func declare (line string,program []string,i int) {
 	}
 }
 
+func declareVarSyntax(name string,program []string,index int) ([]string){	
+	block,endIndex := getBlock(program,index,'{','}')
+	fmt.Println("saving:\t",block)
+	varSyntaxSave[name] = VarSyntaxData{block}
+	varSyntaxNames = append(varSyntaxNames,name)
+
+	program = deleteBlock(program,index,endIndex)
+
+	return program
+}
+
+func StartExecution() {
+	fmt.Println(varSyntaxSave)
+	for i := 0; i < len(methodNames); i++ {
+		fmt.Println("trying")
+		methodSave[methodNames[i]] = MethodData{methodSave[methodNames[i]].parameters , Block{replaceSpecialSyntax(methodSave[methodNames[i]].data.data)} }
+	}
+	fmt.Println(methodSave["main"].data.data)
+	err := callFunctionMAIN()
+	if err != "" {
+		fmt.Println("\u001B[40m\u001B[91m",err,"\u001B[0m\n")
+	}
+}
+
+func replaceSpecialSyntax(program []string) ([]string){
+	for i := 0; i < len(program); i++ {
+		for j := 0; j < len(varSyntaxNames); j++ {
+			name := varSyntaxNames[j]
+			value := varSyntaxSave[name].data.data
+			program = Insert(program,name,value)
+		}
+	}
+	return program
+}
+
+func Insert(program []string,name string,value []string) []string{
+	emptyArray := make([]string,len(value))
+
+	for i := 0; i < len(program); i++ {
+		if (strings.TrimSpace(program[i])) == name {
+			program[i] = ""
+
+			for k := 0;k<len(emptyArray);k++{
+				program = append(program,emptyArray[k])
+			}
+
+			program = moveRight(program,i,len(value))
+
+			for k:=1;k<len(value);k++ {
+				program[i+k] = value[k]
+			}
+		}
+	}
+
+	return program
+}
+
+func moveRight (program []string,index int,times int) []string{
+	temp := ""
+	for i:= 0;i<=times;i++ {
+		fmt.Println("itr:",(i+1),"\t",program,"\n")
+
+		tempx :=  program[i+1]
+		program[i] = temp
+		program[i+1] = program[i]
+		temp = tempx
+	}
+
+	return program
+}
+
+func callFunctionMAIN() (string){
+	data := methodSave["main"]
+	if len(data.data.data) == 0 {
+		return MAIN_MISSING_ERR
+	}
+	data.runThrough()
+	return ""
+}
+
+func (data MethodData) runThrough () {
+	program := data.data.data
+	for i := 0; i < len(program); i++ {
+
+		if declarable(program[i]) {
+			declare(program[i],program,i)
+		}
+		
+		if assignable(program[i]) {
+			if strings.Contains(program[i],NORMAL_ASSIGNMENT) {
+				assign(program,NORMAL_ASSIGNMENT,i)
+				continue
+			}
+
+			if strings.Contains(program[i],SYNTACTIC_ASSIGNMENT) {
+				assign(program,SYNTACTIC_ASSIGNMENT,i)
+				continue
+			}
+		}
+
+		checkSpecialFunctions(program[i])
+	}
+}
+
+
 func assignable(line string) (bool) {
 	return (strings.Contains(line,NORMAL_ASSIGNMENT) || strings.Contains(line,SYNTACTIC_ASSIGNMENT))
 }
@@ -395,10 +477,13 @@ func assign (program []string,assignmentType string,i int) {
 		}
 	}
 }
-func declareVarSyntax(name string,program []string,index int) {	
-	block := getBlock(program,index,'{','}')
-	varSyntaxSave[name] = VarSyntaxData{block}
-	varSyntaxNames = append(varSyntaxNames,name)
+
+func deleteBlock (program []string,startIndex int,endIndex int) ([]string){
+	for i := startIndex; i <= endIndex; i++ {
+		program[i] = ""
+	}
+
+	return program
 }
 
 
@@ -407,7 +492,6 @@ func assignToAll(varNames []string,value string,index int,check bool) {
 	for i := 0; i < len(varNames); i++ {
 		varNames[i] = strings.TrimSpace(varNames[i])
 		if strings.HasPrefix(varNames[i],VAR_DECALRATION) {
-			fmt.Println(varNames[i])
 			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
 		}
 		if testVarDeclaration(varNames[i]) && check{
@@ -420,7 +504,6 @@ func assignAll(varNames []string,varValues []string,index int,check bool) {
 	for i := 0; i < len(varNames); i++ {
 		varNames[i] = strings.TrimSpace(varNames[i])
 		if strings.HasPrefix(varNames[i],VAR_DECALRATION) {
-			fmt.Println(varNames[i])
 			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
 		}
 		if testVarDeclaration(varNames[i]) && check{
@@ -442,7 +525,7 @@ func testVarDeclaration(name string) bool{
 	return false
 }
 
-func checkSpecialSyntax(line string) {
+func checkSpecialFunctions(line string) {
 	if strings.HasPrefix(line,PRINTING) {
 		print(line)
 	}
@@ -452,7 +535,7 @@ func print(statement string) {
 	statement = strings.TrimSpace(statement)
 	statement = string([]rune(statement)[len(PRINTING)+1:len(statement)-1])
 	statement = replaceVars(statement)
-	fmt.Print(statement)
+	fmt.Println(statement)
 }
 
 func replaceVars (statement string) (string){
@@ -480,6 +563,7 @@ func replaceVars (statement string) (string){
 			name = make([]rune,0)
 		}
 	}
+
 	return statement
 }
 
