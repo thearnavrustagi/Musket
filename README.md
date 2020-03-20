@@ -84,7 +84,7 @@ Well the one which I just developed is called var syntax
   	var c = a + b 
   }
   ```
-  yes this is eligible syntax but will not work right now well because I have not handled the calculation part and the function calling part
+  yes this is eligible syntax but will not work right now well because I have not handled the calculation part (yes the language is even more useless then before but well calculation implementations are easy and redundant)
 ## About the file<br><br>
 the extension for the file should be .vpr<br><br>
 ## How to run<br>
