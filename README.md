@@ -1,7 +1,7 @@
 # VIPER
 ## VIPER SYNTAX (or general syntax)<br>
  The language is as follows
-```java 
+```python
 __________VIPER_____________
 method main = (){ # comment
 	var x = 20
