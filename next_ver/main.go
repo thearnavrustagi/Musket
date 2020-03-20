@@ -14,7 +14,7 @@ const (
 	CMD_ARG_ERR string= "INVALID COMMAND"
 
 	//syntax
-	FUNCTION_CALL string = "<-"
+	FUNCTION_PARAM string = "<-"
 	NORMAL_ASSIGNMENT string = "="
 	SYNTACTIC_ASSIGNMENT string = "<-"
 
@@ -49,8 +49,12 @@ type Node struct {
 	name string
 }
 
-type methodNode struct {
+type MethodNode struct {
 	parameters string
+	data Block
+}
+
+type VarSyntaxNode struct {
 	data Block
 }
 
@@ -60,13 +64,16 @@ type Block struct {
 
 //global variables
 var headNode *Node
-var dataSave map[string]Data
-var methodSave map[string]methodNode
+var varSave map[string]Data
+var varSyntaxSave map[string]VarSyntaxNode
+var varSyntaxNames []string
+var methodSave map[string]MethodNode
 
 func main() {
 	fmt.Println("Welcome to VIPER Lang")
-	methodSave = make(map[string]methodNode)
-	dataSave = make(map[string]Data)
+	methodSave = make(map[string]MethodNode)
+	varSave = make(map[string]Data)
+	varSyntaxSave = make(map[string]VarSyntaxNode)
 
 	for true {
 		userInput := ""
@@ -167,6 +174,8 @@ func AssignmentRun(program string) {
 
 func StaticallyInitialize(program []string) {
 	for i := 0; i < len(program); i++ {
+		program[i] = strings.TrimSpace(program[i])
+
 		if strings.HasPrefix(program[i],COMMENT_START) {
 			program[i] = ""
 			continue
@@ -184,7 +193,15 @@ func StaticallyInitialize(program []string) {
 		}
 
 		if strings.HasPrefix(program[i],VAR_DECALRATION) {
-			
+			parts := []rune(program[i])
+			name := string(parts[len(VAR_DECALRATION):])
+
+			if strings.Contains(name,SYNTACTIC_ASSIGNMENT) {
+				temp := strings.Split(name,SYNTACTIC_ASSIGNMENT)
+				name = strings.TrimSpace(temp[1])
+				fmt.Print("name :\t",name)
+				declareVarSyntax(name,program,i)
+			}
 		}
 	}
 }
@@ -207,14 +224,14 @@ func declareMethod (name string,parameters string,program []string,index int) {
 	}
 
 	param := string(elems[startIndex+1:endIndex])
-	block := getBlock(program,index)
+	block := getBlock(program,index,'{','}')
 
-	node := methodNode{param,block}
+	node := MethodNode{param,block}
 
 	methodSave[name] = node
 }
 
-func getBlock(program []string,startIndex int) (Block){
+func getBlock(program []string,startIndex int,start rune,end rune) (Block){
 	num_of_nested_blocks := 0
 	endIndex := startIndex
 
@@ -228,12 +245,13 @@ func getBlock(program []string,startIndex int) (Block){
 				break
 			} 
 			
-			if elems[j] == '{' {
+			if elems[j] == start {
 				num_of_nested_blocks++
+				j = j+1
 				continue
 			}
 			
-			if elems[j] == '}' {
+			if elems[j] == end {
 				num_of_nested_blocks--
 			}
 		}
@@ -246,4 +264,11 @@ func getBlock(program []string,startIndex int) (Block){
 	snippet := program[startIndex+1:endIndex]
 	return Block{snippet}
 }
-//...........................................................
+
+func declareVarSyntax(name string,program []string,index int) {
+	//this was done as the getBlock method would fail with similar args and was not accurate
+	block := getBlock(program,index,'{','}')
+	fmt.Println("here",name,"\n",block)
+	varSyntaxSave[name] = VarSyntaxNode{block}
+	varSyntaxNames = append(varSyntaxNames,name)
+}
