@@ -1,15 +1,4 @@
-main = (){
-  x = 20
-  y = 30
-  percent_ <- '(x*100)/y'
-  
-  z = percent_
-
-  z = percent <- (x,y)
-  
-  print("test this and that\n")
-}
-
-method percent = (x,y){
-  return (x*100)/y
+method main = (){
+	print "hello, world"
+	# todo code
 }
