@@ -1,11 +1,17 @@
-method main = () { 
-	display 20 or 30
-	display 50 and 60
-	var 30 = 30,39494,34884
-	display 60 with 40
+method main = () {
+	var a = aye
+	var b = bee
+	display oye
 
+	scope haha{
+		a = 20
+		print "a is {a} and b is {b}"
+	}
+
+	print "a is {a}"
 	# todo code
 }
-method display = (n1,n2) {
-	print "{n1},{n2}"
+
+method display = (a,b) {
+	print "a is {a}"
 }

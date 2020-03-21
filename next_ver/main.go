@@ -32,7 +32,7 @@ const (
 
 	METHOD_DECLARATION string = "method"
 	VAR_DECALRATION string = "var "
-	SCOPE_DECLARATION
+	SCOPE_DECLARATION string = "scope "
 
 	//special syntax
 	PRINTING string = "print "
@@ -308,7 +308,7 @@ func getBlock(program []string,startIndex int,start rune,end rune) (Block,int){
 			break
 		}
 	}
-	if (startIndex == endIndex) {
+	if (startIndex > endIndex) {
 		fmt.Println("\u001B[91m"+METHOD_DECLARATION_ERR,"\u001B[0m\n","line:\t",startIndex+1)
 		buldFailure = true
 		return Block{},startIndex
@@ -373,7 +373,7 @@ func StartExecution() {
 		data := methodSave[methodNames[i]].data.data
 		scopeNode := methodSave[methodNames[i]].scopeNode
 
-		methodSave[methodNames[i]] = &MethodData{param , Block{replaceSpecialSyntax(data)} , scopeNode } //######################################################################## tree implementation is gonna be wierd
+		methodSave[methodNames[i]] = &MethodData{param , Block{replaceSpecialSyntax(data)} , scopeNode }
 
 		fmt.Println("\u001B[92mVAR SYNTAX REPLACEMENT IN METHOD [",methodNames[i],"] \nSTATUS: COMPLETE\u001B[0m\n")
 	}
@@ -459,6 +459,10 @@ func (data MethodData) runThrough () {
 				data.scopeNode.assign(program,SYNTACTIC_ASSIGNMENT,i)
 				continue
 			}
+		}
+
+		if scopeDeclaration(program[i]) {
+			i = data.scopeNode.declareScope(program,i)
 		}
 
 		funcCall,methodName := functionCall(program[i])
@@ -600,6 +604,17 @@ func removeSyntacticSugar(method string) string{
 	}
 
 	return returnString
+}
+
+func scopeDeclaration(code string) bool{
+	return strings.HasPrefix(code,SCOPE_DECLARATION)
+}
+
+func (caller ScopeNode) declareScope (program []string,index int) (int){
+	block,endIndex := getBlock(program,index,'{','}')
+	scope := MethodData{"",block,ScopeNode{&caller,make(map[string]Data)}}
+	scope.runThrough()
+	return endIndex
 }
 
 func (caller ScopeNode) checkSpecialFunctions(line string) {
