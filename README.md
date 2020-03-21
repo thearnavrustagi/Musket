@@ -77,8 +77,8 @@ Well the one which I just developed is called var syntax
   ```python
   method main = (){
   	var a,b = 20,30
-	add
-	print "the sum of a and b is {c}"
+  	add
+  	print "the sum of a and b is {c}"
   }
   var add <- {
   	var c = a + b 
