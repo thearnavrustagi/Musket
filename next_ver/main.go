@@ -448,10 +448,15 @@ func (data MethodData) runThrough (index int) {
 	program := data.data.data
 	for i := index; i < len(program); i++ {
 
-		fmt.Println("line:\t",i)
+		done := data.scopeNode.checkSpecialFunctions(program[i])
+		if done {
+			continue
+		}
+
 
 		if declarable(program[i]) {
 			data.scopeNode.declare(program[i],program,i,true)
+			continue
 		}
 		
 		if assignable(program[i]) {
@@ -468,18 +473,20 @@ func (data MethodData) runThrough (index int) {
 
 		if scopeDeclaration(program[i]) {
 			i = data.scopeNode.declareScope(program,i)
+			continue
 		}
 
 		funcCall,methodName := functionCall(program[i])
 
 		if  funcCall {
 			callFunction(program[i],methodName)
+			continue
 		}
 
-		data.scopeNode.checkSpecialFunctions(program[i])
 		
 		if strings.HasPrefix(program[i],RETURN_STATEMENT) {
 			functionReturn(program[i])
+			continue
 		}
 	}
 
@@ -625,18 +632,19 @@ func (caller ScopeNode) declareScope (program []string,index int) (int){
 	return endIndex
 }
 
-func (caller ScopeNode) checkSpecialFunctions(line string) {
+func (caller ScopeNode) checkSpecialFunctions(line string) (bool){
 	if strings.HasPrefix(line,PRINTING) {
 		caller.print(line)
+		return true
 	}
+	return false
 }
 
 func (caller ScopeNode) print(statement string) {
 	statement = strings.TrimSpace(statement)
 	statement = string([]rune(statement)[len(PRINTING)+1:len(statement)-1])
 	statement = caller.replaceVars(statement)
-	//fmt.Println("\u001B[96m"+statement+"\u001B[0m")
-	fmt.Println(statement)
+	fmt.Println("\u001B[96m"+statement+"\u001B[0m")
 }
 
 func (caller ScopeNode) replaceVars (statement string) (string){
@@ -719,8 +727,6 @@ func (caller ScopeNode) compute(value string) (Data) {
 	for i := 0; i < len(elems); i++ {
 		value = elems[i] + " "
 	}
-
-	fmt.Println(value)
 
 	return Data{value}
 }
