@@ -85,10 +85,37 @@ Well the one which I just developed is called var syntax
   }
   ```
   yes this is eligible syntax but will not work right now well because I have not handled the calculation part (yes the language is even more useless then before but well calculation implementations are easy and redundant)
+## How to run<br>
+- **using shell script**
+  I have added shell script in the following code for faster execution **This will work in linux or any other UNIX os which use bash script** so the code is executed like so 
+  ```shell
+  ./viper.sh run [args]
+  ```
+  this will execute the desired file another alternative to this is
+  ```shell
+  ./viper.sh run -d
+  ```
+  this will run lethalityTest.vpr you can change the contents in it if you want to run the viper shell with the bash just type
+  ```shell
+  ./viper.sh
+  ```
+  with **ABSOLUTELY NO SPACES**
+  important notes
+  - It is possible that the viper.sh file is not executable when you install it, if that is the case then there are two alternatives
+    - MAKE IT EXECUTABLE
+      with the command
+      ```shell
+      chmod +x viper.sh 
+      ```
+    - RUN USING "sh" command
+      ```shell
+      sh viper.sh [args]
+      ```
+  - second thing is that the main BINARY FILE or EXECUTABLE file should always be in the same directory
+- **using go code**
+  open the terminal or ide and compile and run the go code then it will ask for an argument "> " then just type in "run fileName.vpr", the file should be in the same directory as the file or pwd(present working directory), if you want quicker access then modify the lethalityTest.vpr and type "run -d" as it is set to default path <br>type quit or control-c to exit<br><br>
 ## About the file<br><br>
 the extension for the file should be .vpr<br><br>
-## How to run<br>
-open the terminal or ide and compile and run the go code then it will ask for an argument "> " then just type in "run fileName.vpr", the file should be in the same directory as the file or pwd(present working directory), if you want quicker access then modify the lethalityTest.vpr and type "run -d" as it is set to default path <br>type quit or control-c to exit<br><br>
 ## The code<br>
 Very simple clunky POP approach (believe me OOP is ammazing this POP almost killed me) but it has scope for improvement because after this I have to arrange it into packages then it will have amazing scalability
 ### Version 0.5 (B3TA)<br>
