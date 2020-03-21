@@ -12,7 +12,7 @@ method main = (){ # comment
 	something
 
 	print "okay a is {a}|{b}|{c}|{x}\n" # the \n is compulsory
-	add <- (a,b)
+	add << (a,b)
 }
 
 var something <- {
