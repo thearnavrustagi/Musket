@@ -28,6 +28,8 @@ const (
 	NORMAL_ASSIGNMENT string = "="
 	SYNTACTIC_ASSIGNMENT string = "<-"
 
+	RETURN_STATEMENT string = "return "
+
 	COMMENT_START string = "#"
 
 	METHOD_DECLARATION string = "method"
@@ -464,7 +466,7 @@ func (data MethodData) runThrough () {
 		if scopeDeclaration(program[i]) {
 			i = data.scopeNode.declareScope(program,i)
 		}
-
+		
 		funcCall,methodName := functionCall(program[i])
 
 		if  funcCall {
@@ -549,7 +551,7 @@ func testVarDeclaration(name string) bool{
 
 func functionCall(args string) (bool,string){
 	for i := 0; i < len(methodNames); i++ {
-		if (strings.HasPrefix(args,methodNames[i]+" ")) {
+		if (strings.HasPrefix(args,methodNames[i])) {
 			return true,methodNames[i]
 		}
 	}
