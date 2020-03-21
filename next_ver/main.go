@@ -20,7 +20,7 @@ const (
 	BUILD_FAIL_ERR string = "FATAL ERROR\nBUILD FAILED"
 
 	//syntax
-	FUNCTION_PARAM string = "<-"
+	FUNCTION_CALL string = "<<"
 	NORMAL_ASSIGNMENT string = "="
 	SYNTACTIC_ASSIGNMENT string = "<-"
 
@@ -466,6 +466,12 @@ func (data MethodData) runThrough () {
 			}
 		}
 
+		funcCall,methodName := functionCall(program[i])
+
+		if  funcCall {
+			callFunction(program[i],methodName)
+		}
+
 		checkSpecialFunctions(program[i])
 	}
 }
@@ -550,6 +556,23 @@ func testVarDeclaration(name string) bool{
 	}
 
 	return false
+}
+
+func functionCall(args string) (bool,string){
+	for i := 0; i < len(methodNames); i++ {
+		if (strings.HasPrefix(args,methodNames[i]+" ")) {
+			return true,methodNames[i]
+		}
+	}
+	return false,""
+}
+
+func callFunction (method string,name string) {
+	method = strings.TrimSpace(method)
+	param := string([]rune(method)[len(name)+1:])
+	assignmentSting := methodSave[name].parameters+" = "+param
+	methodSave[name].data.data[0] = assignmentSting
+	methodSave[name].runThrough()
 }
 
 func checkSpecialFunctions(line string) {
