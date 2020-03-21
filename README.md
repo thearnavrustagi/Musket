@@ -86,7 +86,7 @@ Well the one which I just developed is called var syntax
   ```
   yes this is eligible syntax but will not work right now well because I have not handled the calculation part (yes the language is even more useless then before but well calculation implementations are easy and redundant)
 ## How to run<br>
-- **using shell script**
+- **using shell script**<br>
   I have added shell script in the following code for faster execution **This will work in linux or any other UNIX os which use bash script** so the code is executed like so 
   ```shell
   ./viper.sh run [args]
@@ -100,7 +100,7 @@ Well the one which I just developed is called var syntax
   ./viper.sh
   ```
   with **ABSOLUTELY NO SPACES**<br><br>
-  #### important notes
+  #### important notes<br>
   - ##### It is possible that the viper.sh file is not executable when you install it, if that is the case then there are two alternatives
     - MAKE IT EXECUTABLE
       with the command
@@ -112,7 +112,7 @@ Well the one which I just developed is called var syntax
       sh viper.sh [args]
       ```
   - ##### second thing is that the main BINARY FILE or EXECUTABLE file should always be in the same directory
-- **using go code**
+- **using go code**<br>
   open the terminal or ide and compile and run the go code then it will ask for an argument "> " then just type in "run fileName.vpr", the file should be in the same directory as the file or pwd(present working directory), if you want quicker access then modify the lethalityTest.vpr and type "run -d" as it is set to default path <br>type quit or control-c to exit<br><br>
 ## About the file<br><br>
 the extension for the file should be .vpr<br><br>
