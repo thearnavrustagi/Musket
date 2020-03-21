@@ -631,7 +631,7 @@ func print(statement string) {
 	statement = strings.TrimSpace(statement)
 	statement = string([]rune(statement)[len(PRINTING)+1:len(statement)-1])
 	statement = replaceVars(statement)
-	fmt.Print("\u001B[96m"+statement+"\u001B[0m")
+	fmt.Println("\u001B[96m"+statement+"\u001B[0m")
 }
 
 func replaceVars (statement string) (string){
