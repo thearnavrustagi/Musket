@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"os"
 	"io/ioutil"
+	"reflect"
 
 	//"compiler/cmd"
 )
@@ -351,9 +352,9 @@ func (caller ScopeNode)declare (line string,program []string,i int,check bool) {
 				buldFailure = true
 			}
 			if len(allValues) == 1 {
-				caller.assignToAll(allVarNames,allValues[0],i,check)
+				caller.assignToAll(allVarNames,allValues[0])
 			} else {
-				caller.assignAll(allVarNames,allValues,i,check)
+				caller.assignAll(allVarNames,allValues)
 			}
 		}
 	}
@@ -439,13 +440,15 @@ func callFunctionMAIN() (string){
 	if len(data.data.data) == 0 {
 		return MAIN_MISSING_ERR
 	}
-	data.runThrough()
+	data.runThrough(1)
 	return ""
 }
 
-func (data MethodData) runThrough () {
+func (data MethodData) runThrough (index int) {
 	program := data.data.data
-	for i := 0; i < len(program); i++ {
+	for i := index; i < len(program); i++ {
+
+		fmt.Println("line:\t",i)
 
 		if declarable(program[i]) {
 			data.scopeNode.declare(program[i],program,i,true)
@@ -466,7 +469,7 @@ func (data MethodData) runThrough () {
 		if scopeDeclaration(program[i]) {
 			i = data.scopeNode.declareScope(program,i)
 		}
-		
+
 		funcCall,methodName := functionCall(program[i])
 
 		if  funcCall {
@@ -474,7 +477,13 @@ func (data MethodData) runThrough () {
 		}
 
 		data.scopeNode.checkSpecialFunctions(program[i])
+		
+		if strings.HasPrefix(program[i],RETURN_STATEMENT) {
+			functionReturn(program[i])
+		}
 	}
+
+	data = MethodData{}
 }
 
 
@@ -504,9 +513,9 @@ func (caller ScopeNode) assign (program []string,assignmentType string,i int) {
 			fmt.Println("\u001B[91m"+INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
 		}
 		if len(allValues) == 1 {
-			caller.assignToAll(allVarNames,allValues[0],i,false)
+			caller.assignToAll(allVarNames,allValues[0])
 		} else {
-			caller.assignAll(allVarNames,allValues,i,false)
+			caller.assignAll(allVarNames,allValues)
 		}
 	}
 }
@@ -520,27 +529,24 @@ func deleteBlock (program []string,startIndex int,endIndex int) ([]string){
 }
 
 
-func (caller ScopeNode)assignToAll(varNames []string,value string,index int,check bool) {
-	data := compute(value)
+func (caller ScopeNode)assignToAll(varNames []string,value string) {
+	data := caller.compute(value)
+
 	for i := 0; i < len(varNames); i++ {
 		varNames[i] = strings.TrimSpace(varNames[i])
 		if strings.HasPrefix(varNames[i],VAR_DECALRATION) {
 			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
-		}
-		if testVarDeclaration(varNames[i]) && check{
 		}
 		caller.varSave[varNames[i]] = data
 	}
 }
-func (caller ScopeNode) assignAll(varNames []string,varValues []string,index int,check bool) {
+func (caller ScopeNode) assignAll(varNames []string,varValues []string) {
 	for i := 0; i < len(varNames); i++ {
 		varNames[i] = strings.TrimSpace(varNames[i])
 		if strings.HasPrefix(varNames[i],VAR_DECALRATION) {
 			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
 		}
-		if testVarDeclaration(varNames[i]) && check{
-		}
-		data := compute(varValues[i])
+		data := caller.compute(varValues[i])
 		caller.varSave[varNames[i]] = data
 	}
 }
@@ -565,7 +571,7 @@ func callFunction (method string,name string) {
 	assignmentSting := methodSave[name].parameters+" = "+param
 	methodSave[name].data.data[0] = assignmentSting
 
-	methodSave[name].runThrough()
+	methodSave[name].runThrough(0)
 }
 
 func removeSyntacticSugar(method string) string{
@@ -615,7 +621,7 @@ func scopeDeclaration(code string) bool{
 func (caller ScopeNode) declareScope (program []string,index int) (int){
 	block,endIndex := getBlock(program,index,'{','}')
 	scope := MethodData{"",block,ScopeNode{&caller,make(map[string]Data)}}
-	scope.runThrough()
+	scope.runThrough(0)
 	return endIndex
 }
 
@@ -668,29 +674,53 @@ func (caller ScopeNode) replaceVars (statement string) (string){
 
 func (caller ScopeNode)searchTreeFor(name string) (string,bool){
 	found := false
+	itrnext := true
 	presentNode := &caller
 	for !found {
-		if (presentNode.varSave[name] == Data{}){
-			if (presentNode.parent.varSave != nil){
+		if itrnext {
+			data := presentNode.varSave[name].value
+			if data != "" {
+				return data,true
+			}
+			if (reflect.DeepEqual(presentNode.parent.varSave,globalScope.varSave)){
 				presentNode = presentNode.parent
+				itrnext = false
+				found = true
 			} else {
-				return "",false
+				presentNode = presentNode.parent
 			}
 		} else {
-			return presentNode.varSave[name].value,true
+			return "",false
 		}
 	}
 
 	return "",false
 }
 
+func functionReturn(line string) {
+
+}
+
 //compute is incomplete ##########################################3
-func compute(value string) (Data) {
+func (caller ScopeNode) compute(value string) (Data) {
 	value =  strings.TrimSpace(value)
 	elems := strings.Split(value," ")
-	if len(elems) == 1 || strings.HasPrefix(value,"\"") && strings.HasSuffix(value,"\""){
-		return Data{value}
+	for i := 0; i < len(elems); i++ {
+		if (elems[i] != "" || elems[i] != "" ){
+			value,found := caller.searchTreeFor(elems[i])
+			if found {
+				elems[i] = value
+			}
+		}
 	}
-	
-	return Data{} 
+
+	value = ""
+
+	for i := 0; i < len(elems); i++ {
+		value = elems[i] + " "
+	}
+
+	fmt.Println(value)
+
+	return Data{value}
 }
