@@ -12,7 +12,7 @@ method main = (){ # comment
 	something
 
 	print "okay a is {a}|{b}|{c}|{x}\n" # the \n is compulsory
-	add << (a,b)
+	add a,b
 }
 
 var something <- {
@@ -46,20 +46,20 @@ method add = (a,b){
    - [ ] user input                    
    - [ ] type variables                
    - [ ] if/else                       
-   - [ ] while                         
+   - [ ] while/for                      
 - [ ] OPERATORS<br>
   - [ ] arithmatic                    
   - [ ] logical                       
   - [ ] relational                    
   - [ ] bitwise                       
 - [ ] PROGRAMMING FEATURES<br>
-  - [ ] Procedural programming        
+  - [x] Procedural programming        
   - [ ] Object Oriented Programming   
   - [x] Functional Programming   
   - [x] Variable Syntax
   - [ ] Smart Interpreter
 - [x] ERROR_HANDELING
-## Unique Features !!!
+## Unique Features and Syntax
 Well the one which I just developed is called var syntax
 - ## VAR_SYNTAX<br>
   well this is basically that you assign a variable like this
