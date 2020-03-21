@@ -6,7 +6,6 @@ import (
 	"bufio"
 	"os"
 	"io/ioutil"
-	"strconv"
 
 	//"compiler/cmd"
 )
@@ -15,7 +14,6 @@ const (
 	CMD_ARG_ERR string= "\u001B[91mINVALID COMMAND\u001B[0m\n"
 	METHOD_DECLARATION_ERR string = "The '{' token should not have any following token except new line feed or space"
 	INSUFFICIENT_VARS_ERR string = "the number of vars on the lhs dont match with the values on the rhs"
-	ALREADY_DECLARED_ERR string = "the variables have already been declared please remove the \"var\" specifier"
 	MAIN_MISSING_ERR string = "FATAL ERROR\nMETHOD MAIN IS MISSING"
 	BUILD_FAIL_ERR string = "FATAL ERROR\nBUILD FAILED"
 
@@ -34,36 +32,21 @@ const (
 
 	METHOD_DECLARATION string = "method"
 	VAR_DECALRATION string = "var "
+	SCOPE_DECLARATION
 
 	//special syntax
 	PRINTING string = "print "
+
+	//special constants
+	NULL = "null"
 
 )
 //structs
 type actionFunc func(string) (bool,string)
 type arith func(string,string) (string)
 
-func StrToInt(str string) (int, error) {
-    nonFractionalPart := strings.Split(str, ".")
-    return strconv.Atoi(nonFractionalPart[0])
-}
-
 type CmdArgs struct {
 	action actionFunc
-}
-
-type ArithExpression struct {
-	representation string
-	action arith
-}
-
-type Node struct {
-	value string
-	childAction string
-}
-
-type AssignmentLinkedList struct {
-	child *Node
 }
 
 type Data struct {
@@ -73,6 +56,12 @@ type Data struct {
 type MethodData struct {
 	parameters string
 	data Block
+	scopeNode ScopeNode
+}
+
+type ScopeNode struct {
+	parent *ScopeNode
+	varSave map[string]Data
 }
 
 type VarSyntaxData struct {
@@ -83,14 +72,11 @@ type Block struct {
 	data []string
 }
 
-//global variables
-var headNode *Node
-
-var varSave map[string]Data
 var varSyntaxSave map[string]VarSyntaxData
 var varSyntaxNames []string
-var methodSave map[string]MethodData
+var methodSave map[string]*MethodData
 var methodNames []string
+var globalScope ScopeNode
 
 var buldFailure bool
 
@@ -99,9 +85,9 @@ func main() {
 	args := getUserArgs()
 	
 	if args != "shell" {
-		methodSave = make(map[string]MethodData)
-		varSave = make(map[string]Data)
+		methodSave = make(map[string]*MethodData)
 		varSyntaxSave = make(map[string]VarSyntaxData)
+		globalScope = ScopeNode{nil,make(map[string]Data)}
 
 		
 		program := Interpret(args,argHandler)
@@ -110,10 +96,9 @@ func main() {
 		fmt.Println("WELCOME TO VIPER LANG")
 	
 		for true {
-			methodSave = make(map[string]MethodData)
-			varSave = make(map[string]Data)
+			methodSave = make(map[string]*MethodData)
 			varSyntaxSave = make(map[string]VarSyntaxData)
-
+			globalScope = ScopeNode{nil,make(map[string]Data)}
 			userInput := ""
 			reader := bufio.NewReader(os.Stdin)
 
@@ -125,14 +110,18 @@ func main() {
 
 			startExec(program)
 
-			varSyntaxSave = nil
-			methodSave = nil
-			varSyntaxSave = nil
-			methodNames = nil
-			varSyntaxNames = nil
-			buldFailure = false
+			nullifyData()
 		}
 	}
+}
+
+func nullifyData() {
+	varSyntaxSave = nil
+	methodSave = nil
+	globalScope = ScopeNode{}
+	methodNames = nil
+	varSyntaxNames = nil
+	buldFailure = false
 }
 
 //initializes the commands
@@ -248,11 +237,7 @@ func StaticallyInitialize(program []string) {
 			name = strings.TrimSpace(temp[0])
 			parameters := strings.TrimSpace(temp[1])
 
-			declareMethod(name,parameters,program,i)
-		}
-
-		if declarable(program[i]) {
-			declare(program[i],program,i,true)
+			i = globalScope.declareMethod(name,parameters,program,i)
 		}
 	}
 
@@ -264,7 +249,7 @@ func StaticallyInitialize(program []string) {
 	}
 }
 
-func declareMethod (name string,parameters string,program []string,index int) {
+func (caller ScopeNode)declareMethod (name string,parameters string,program []string,index int) (int){
 	elems := []rune(strings.TrimSpace(parameters))
 
 	var startIndex,endIndex int
@@ -282,13 +267,15 @@ func declareMethod (name string,parameters string,program []string,index int) {
 	}
 
 	param := string(elems[startIndex+1:endIndex])
-	block,_ := getBlock(program,index,'{','}')
+	block,endIndex := getBlock(program,index,'{','}')
 
-	node := MethodData{param,block}
+	node := MethodData{param,block, ScopeNode{&caller,make(map[string]Data)}}
 
-	methodSave[name] = node
+	methodSave[name] = &node
 
 	methodNames = append(methodNames,name)
+
+	return endIndex
 }
 
 func getBlock(program []string,startIndex int,start rune,end rune) (Block,int){
@@ -336,7 +323,7 @@ func declarable (line string) (bool) {
 	return strings.HasPrefix(line,VAR_DECALRATION)
 }
 
-func declare (line string,program []string,i int,check bool) {
+func (caller ScopeNode)declare (line string,program []string,i int,check bool) {
 	if strings.HasPrefix(line,VAR_DECALRATION) {
 		parts := []rune(line)
 		name := string(parts[len(VAR_DECALRATION):])
@@ -345,7 +332,6 @@ func declare (line string,program []string,i int,check bool) {
 			temp := strings.Split(name,SYNTACTIC_ASSIGNMENT)
 			name = strings.TrimSpace(temp[0])
 			if testVarDeclaration(name) {
-				fmt.Println("\u001B[91m"+ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",i+1)
 				buldFailure = true
 			}
 			declareVarSyntax(name,program,i)
@@ -363,9 +349,9 @@ func declare (line string,program []string,i int,check bool) {
 				buldFailure = true
 			}
 			if len(allValues) == 1 {
-				assignToAll(allVarNames,allValues[0],i,check)
+				caller.assignToAll(allVarNames,allValues[0],i,check)
 			} else {
-				assignAll(allVarNames,allValues,i,check)
+				caller.assignAll(allVarNames,allValues,i,check)
 			}
 		}
 	}
@@ -383,7 +369,12 @@ func declareVarSyntax(name string,program []string,index int) ([]string){
 
 func StartExecution() {
 	for i := 0; i < len(methodNames); i++ {
-		methodSave[methodNames[i]] = MethodData{ methodSave[methodNames[i]].parameters , Block{replaceSpecialSyntax(methodSave[methodNames[i]].data.data) } }
+		param := methodSave[methodNames[i]].parameters
+		data := methodSave[methodNames[i]].data.data
+		scopeNode := methodSave[methodNames[i]].scopeNode
+
+		methodSave[methodNames[i]] = &MethodData{param , Block{replaceSpecialSyntax(data)} , scopeNode } //######################################################################## tree implementation is gonna be wierd
+
 		fmt.Println("\u001B[92mVAR SYNTAX REPLACEMENT IN METHOD [",methodNames[i],"] \nSTATUS: COMPLETE\u001B[0m\n")
 	}
 	err := callFunctionMAIN()
@@ -441,8 +432,8 @@ func moveRight (program []string,index int,times int) []string{
 
 func callFunctionMAIN() (string){
 	fmt.Println("\u001B[92mEXECUTION ENVIRONMENT SET\nCODE EXECUTION STARTING\u001B[0m\n\n")
-	
-	data := methodSave["main"]
+	main := methodSave["main"]
+	var data MethodData = MethodData{main.parameters,main.data,main.scopeNode}
 	if len(data.data.data) == 0 {
 		return MAIN_MISSING_ERR
 	}
@@ -455,17 +446,17 @@ func (data MethodData) runThrough () {
 	for i := 0; i < len(program); i++ {
 
 		if declarable(program[i]) {
-			declare(program[i],program,i,false)
+			data.scopeNode.declare(program[i],program,i,true)
 		}
 		
 		if assignable(program[i]) {
 			if strings.Contains(program[i],NORMAL_ASSIGNMENT) {
-				assign(program,NORMAL_ASSIGNMENT,i)
+				data.scopeNode.assign(program,NORMAL_ASSIGNMENT,i)
 				continue
 			}
 
 			if strings.Contains(program[i],SYNTACTIC_ASSIGNMENT) {
-				assign(program,SYNTACTIC_ASSIGNMENT,i)
+				data.scopeNode.assign(program,SYNTACTIC_ASSIGNMENT,i)
 				continue
 			}
 		}
@@ -476,7 +467,7 @@ func (data MethodData) runThrough () {
 			callFunction(program[i],methodName)
 		}
 
-		checkSpecialFunctions(program[i])
+		data.scopeNode.checkSpecialFunctions(program[i])
 	}
 }
 
@@ -485,13 +476,12 @@ func assignable(line string) (bool) {
 	return (strings.Contains(line,NORMAL_ASSIGNMENT) || strings.Contains(line,SYNTACTIC_ASSIGNMENT))
 }
 
-func assign (program []string,assignmentType string,i int) {
+func (caller ScopeNode) assign (program []string,assignmentType string,i int) {
 	line := program[i]
 	if assignmentType == SYNTACTIC_ASSIGNMENT {
 		temp := strings.Split(line,SYNTACTIC_ASSIGNMENT)
 		name := strings.TrimSpace(temp[0])
 		if testVarDeclaration(name) {
-			fmt.Println("\u001B[91m"+ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",i+1)
 			buldFailure = true
 		}
 
@@ -508,9 +498,9 @@ func assign (program []string,assignmentType string,i int) {
 			fmt.Println("\u001B[91m"+INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
 		}
 		if len(allValues) == 1 {
-			assignToAll(allVarNames,allValues[0],i,false)
+			caller.assignToAll(allVarNames,allValues[0],i,false)
 		} else {
-			assignAll(allVarNames,allValues,i,false)
+			caller.assignAll(allVarNames,allValues,i,false)
 		}
 	}
 }
@@ -524,7 +514,7 @@ func deleteBlock (program []string,startIndex int,endIndex int) ([]string){
 }
 
 
-func assignToAll(varNames []string,value string,index int,check bool) {
+func (caller ScopeNode)assignToAll(varNames []string,value string,index int,check bool) {
 	data := compute(value)
 	for i := 0; i < len(varNames); i++ {
 		varNames[i] = strings.TrimSpace(varNames[i])
@@ -532,34 +522,25 @@ func assignToAll(varNames []string,value string,index int,check bool) {
 			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
 		}
 		if testVarDeclaration(varNames[i]) && check{
-			fmt.Println("\u001B[91m"+ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",index+1)
 		}
-		varSave[varNames[i]] = data
+		caller.varSave[varNames[i]] = data
 	}
 }
-func assignAll(varNames []string,varValues []string,index int,check bool) {
+func (caller ScopeNode) assignAll(varNames []string,varValues []string,index int,check bool) {
 	for i := 0; i < len(varNames); i++ {
 		varNames[i] = strings.TrimSpace(varNames[i])
 		if strings.HasPrefix(varNames[i],VAR_DECALRATION) {
 			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
 		}
 		if testVarDeclaration(varNames[i]) && check{
-			fmt.Println("\u001B[91m"+ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",index+1)
 		}
 		data := compute(varValues[i])
-		varSave[varNames[i]] = data
+		caller.varSave[varNames[i]] = data
 	}
 }
 
 func testVarDeclaration(name string) bool{
-	t1 := varSyntaxSave[name].data.data
-	t2 := string(varSave[name].value)
-
-	if (len(t1) != 0 || t2 != ""){
-		return true
-	}
-
-	return false
+	return true
 }
 
 func functionCall(args string) (bool,string){
@@ -621,20 +602,21 @@ func removeSyntacticSugar(method string) string{
 	return returnString
 }
 
-func checkSpecialFunctions(line string) {
+func (caller ScopeNode) checkSpecialFunctions(line string) {
 	if strings.HasPrefix(line,PRINTING) {
-		print(line)
+		caller.print(line)
 	}
 }
 
-func print(statement string) {
+func (caller ScopeNode) print(statement string) {
 	statement = strings.TrimSpace(statement)
 	statement = string([]rune(statement)[len(PRINTING)+1:len(statement)-1])
-	statement = replaceVars(statement)
-	fmt.Println("\u001B[96m"+statement+"\u001B[0m")
+	statement = caller.replaceVars(statement)
+	//fmt.Println("\u001B[96m"+statement+"\u001B[0m")
+	fmt.Println(statement)
 }
 
-func replaceVars (statement string) (string){
+func (caller ScopeNode) replaceVars (statement string) (string){
 	chars := []rune(" "+statement)
 	var name []rune
 	var appendable bool
@@ -654,13 +636,35 @@ func replaceVars (statement string) (string){
 			endIndex = i+1
 			varName := string(chars[startIndex:endIndex])
 			pureName := string([]rune(varName)[1:len(varName)-1])
-			value := varSave[pureName]
-			statement = strings.Replace(statement,varName,value.value,1)
+			value,found := caller.searchTreeFor(pureName)
+			if found {
+				statement = strings.Replace(statement,varName,value,1)
+			} else {
+				statement = strings.Replace(statement,varName,NULL,1)
+			}
 			name = make([]rune,0)
 		}
 	}
 
 	return statement
+}
+
+func (caller ScopeNode)searchTreeFor(name string) (string,bool){
+	found := false
+	presentNode := &caller
+	for !found {
+		if (presentNode.varSave[name] == Data{}){
+			if (presentNode.parent.varSave != nil){
+				presentNode = presentNode.parent
+			} else {
+				return "",false
+			}
+		} else {
+			return presentNode.varSave[name].value,true
+		}
+	}
+
+	return "",false
 }
 
 //compute is incomplete ##########################################3
