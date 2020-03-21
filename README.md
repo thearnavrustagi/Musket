@@ -61,7 +61,7 @@ method add = (a,b){
 - [x] ERROR_HANDELING
 ## Unique Features !!!
 Well the one which I just developed is called var syntax
-- **VAR_SYNTAX**<br>
+- ## VAR_SYNTAX<br>
   well this is basically that you assign a variable like this
   ```python
   var [var_name] <- {
@@ -86,7 +86,7 @@ Well the one which I just developed is called var syntax
   ```
   yes this is eligible syntax but will not work right now well because I have not handled the calculation part (yes the language is even more useless then before but well calculation implementations are easy and redundant)
 ## How to run<br>
-- **using shell script**<br>
+- ### using shell script<br>
   I have added shell script in the following code for faster execution **This will work in linux or any other UNIX os which use bash script** so the code is executed like so 
   ```shell
   ./viper.sh run [args]
@@ -112,7 +112,7 @@ Well the one which I just developed is called var syntax
       sh viper.sh [args]
       ```
   - ##### second thing is that the main BINARY FILE or EXECUTABLE file should always be in the same directory
-- **using go code**<br>
+- ### using go code<br>
   open the terminal or ide and compile and run the go code then it will ask for an argument "> " then just type in "run fileName.vpr", the file should be in the same directory as the file or pwd(present working directory), if you want quicker access then modify the lethalityTest.vpr and type "run -d" as it is set to default path <br>type quit or control-c to exit<br><br>
 ## About the file<br><br>
 the extension for the file should be .vpr<br><br>
