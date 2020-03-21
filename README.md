@@ -90,16 +90,30 @@ Well the one which I just developed is called var syntax
   I have added shell script in the following code for faster execution **This will work in linux or any other UNIX os which use bash script** so the code is executed like so 
   ```shell
   ./viper.sh run [args]
+  # or
+  ./viper.sh -r [args]
   ```
   this will execute the desired file another alternative to this is
   ```shell
   ./viper.sh run -d
+  # or
+  ./viper.sh -r -d
   ```
   this will run lethalityTest.vpr you can change the contents in it if you want to run the viper shell with the bash just type
   ```shell
+  ./viper.sh shell
+  # or
+  ./viper.sh -s
+  ```
+  with **ABSOLUTELY NO SPACES**<br>For the present commands which were added to the script type 
+  ```shell
+  ./viper.sh --help
+  # or
+  ./viper.sh help
+  # or
   ./viper.sh
   ```
-  with **ABSOLUTELY NO SPACES**<br><br>
+  <br><br>
   #### important notes<br>
   - ##### It is possible that the viper.sh file is not executable when you install it, if that is the case then there are two alternatives
     - MAKE IT EXECUTABLE
