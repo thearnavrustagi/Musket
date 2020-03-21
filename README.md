@@ -99,9 +99,9 @@ Well the one which I just developed is called var syntax
   ```shell
   ./viper.sh
   ```
-  with **ABSOLUTELY NO SPACES**
-  important notes
-  - It is possible that the viper.sh file is not executable when you install it, if that is the case then there are two alternatives
+  with **ABSOLUTELY NO SPACES**<br><br>
+  #### important notes
+  - ##### It is possible that the viper.sh file is not executable when you install it, if that is the case then there are two alternatives
     - MAKE IT EXECUTABLE
       with the command
       ```shell
@@ -111,7 +111,7 @@ Well the one which I just developed is called var syntax
       ```shell
       sh viper.sh [args]
       ```
-  - second thing is that the main BINARY FILE or EXECUTABLE file should always be in the same directory
+  - ##### second thing is that the main BINARY FILE or EXECUTABLE file should always be in the same directory
 - **using go code**
   open the terminal or ide and compile and run the go code then it will ask for an argument "> " then just type in "run fileName.vpr", the file should be in the same directory as the file or pwd(present working directory), if you want quicker access then modify the lethalityTest.vpr and type "run -d" as it is set to default path <br>type quit or control-c to exit<br><br>
 ## About the file<br><br>
