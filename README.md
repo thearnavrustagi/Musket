@@ -5,9 +5,10 @@ code is in developement stage please wait for a release
 ```python
 __________VIPER_____________
 method main = (){ # comment
-	var x = 20
-	var a,b,c = 10,15,17
+	x = 20
+	a,b,c = 10,15,17
 	x = 30
+	test = "x - y"
 
 	something
 
@@ -19,7 +20,7 @@ method main = (){ # comment
 
 var something <- {
 	print "hello"
-	var = {subtract}
+	var = {yulo}
 }
 
 method subtract = (a,b){
@@ -34,9 +35,14 @@ method add = (a,b){
  ___________JAVA____________
  public static void main() {
  	int x=20;
-	int a = 10,b=15,c=17;
-	x = 30;
+  	int a = 10,b=15,c=17;
+  	x = 30;
+	
+	//no equivalent syntax for something
+	
 	System.out.println("okay a is "+a+"|"+b+"|"+c+"|"+x)
+	
+	int temp = add(a,b)
  }
  
  public void add(int a,int b) {
