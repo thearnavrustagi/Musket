@@ -11,7 +11,7 @@ method main = (){ # comment
 
 	something
 
-	print "okay a is {a}|{b}|{c}|{x}\n" # the \n is compulsory
+	print "okay a is {a}|{b}|{c}|{x}"
 	
 	var x = subtract a,b
 	var y = add a and b
