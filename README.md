@@ -12,12 +12,18 @@ method main = (){ # comment
 	something
 
 	print "okay a is {a}|{b}|{c}|{x}\n" # the \n is compulsory
-	add a,b
+	
+	x = subtract a,b
+	y = add a and b
 }
 
 var something <- {
 	print "hello"
 	var = {subtract}
+}
+
+method subtract = (a,b){
+	return a-b
 }
 
 method add = (a,b){
@@ -85,6 +91,29 @@ Well the one which I just developed is called var syntax
   }
   ```
   yes this is eligible syntax but will not work right now well because I have not handled the calculation part (yes the language is even more useless then before but well calculation implementations are easy and redundant)
+- ### Function Calling
+  This is another thing that I feel is beautiful about the language why so? well here you go 
+  ```python
+  method main = (){
+  	var a,b = 20,30
+  	println "hello,world",num
+	add a and b
+	var c = (choose a or b)
+  }
+  method println = (str,num){
+  	print "{str}{num}"
+  }
+  method add = (arg1,arg2){
+  	return (arg+var)
+  }
+  method choose = (arg1,arg2)(
+  	if arg1>arg2 {
+		return arg1
+	}
+	return arg2
+  )
+  ```
+  the first declaration with the comma is the official declaration the rest are syntactic sugar to beautify the code you can add or remove them in the methodSugar.txt file with the "|" delimeter
 ## How to run<br>
 - ### using shell script<br>
   I have added shell script in the following code for faster execution **This will work in linux or any other UNIX os which use bash script** so the code is executed like so 
