@@ -115,8 +115,8 @@ Well the one which I just developed is called var syntax
   )
   ```
   the first declaration with the comma is the official declaration the rest are syntactic sugar to beautify the code you can add or remove them in the methodSugar.txt file with the "|" delimeter<br>
-- Scoping
-  Scoping is by default done in the program by that I basically mean that the values of one method don't go jumping in that of another method, you can also control it with scoping blocks an example is
+- ### Scoping
+  Scoping is done by default in the program by that I basically mean that the values of one method don't go jumping in that of another method, you can also control it with scoping blocks an example is
   ```python
   method main = (){
   	str = "hello"
