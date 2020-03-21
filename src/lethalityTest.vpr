@@ -1,17 +1,12 @@
 method main = () {
-	var a = aye
-	var b = bee
-	display oye
+	vad = print "yolo"
+	str = hello
 
-	scope haha{
-		a = 20
-		print "a is {a} and b is {b}"
-	}
+	rtd
 
-	print "a is {a}"
-	# todo code
+	print "{str}, world {vad}"
 }
 
-method display = (a,b) {
-	print "a is {a}"
+var rtd <- {
+	{vad}
 }

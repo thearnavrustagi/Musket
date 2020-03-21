@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"bufio"
-	"os" 
+	"os"
 	"io/ioutil"
 	"reflect"
 
@@ -242,14 +242,17 @@ func StaticallyInitialize(program []string) {
 
 			i = globalScope.declareMethod(name,parameters,program,i)
 		}
+		if declarable(program[i]) {
+			globalScope.declare(program[i],program,i,true)
+		}
 	}
 
-	if buldFailure == true {
-		fmt.Println("\u001B[91m"+BUILD_FAIL_ERR,"\u001B[0m")
-	} else {
+//	if buldFailure == true {
+//		fmt.Println("\u001B[91m"+BUILD_FAIL_ERR,"\u001B[0m")
+//	} else {
 		fmt.Println("\u001B[92mFIRST ASSIGNMENT RUN \nSTATUS: COMPLETE\u001B[0m\n")
 		StartExecution()
-	}
+//	}
 }
 
 func (caller ScopeNode)declareMethod (name string,parameters string,program []string,index int) (int){
@@ -372,11 +375,12 @@ func declareVarSyntax(name string,program []string,index int) ([]string){
 
 func StartExecution() {
 	for i := 0; i < len(methodNames); i++ {
+		scpNd := methodSave[methodNames[i]].scopeNode
 		param := methodSave[methodNames[i]].parameters
 		data := methodSave[methodNames[i]].data.data
 		scopeNode := methodSave[methodNames[i]].scopeNode
 
-		methodSave[methodNames[i]] = &MethodData{param , Block{replaceSpecialSyntax(data)} , scopeNode }
+		methodSave[methodNames[i]] = &MethodData{param , Block{scpNd.replaceSpecialSyntax(data)} , scopeNode }
 
 		fmt.Println("\u001B[92mVAR SYNTAX REPLACEMENT IN METHOD [",methodNames[i],"] \nSTATUS: COMPLETE\u001B[0m\n")
 	}
@@ -386,13 +390,12 @@ func StartExecution() {
 	}
 }
 
-func replaceSpecialSyntax(program []string) ([]string){
-	for i := 0; i < len(program); i++ {
-		for j := 0; j < len(varSyntaxNames); j++ {
-			name := varSyntaxNames[j]
-			value := varSyntaxSave[name].data.data
-			program = Insert(program,name,value)
-		}
+func (caller ScopeNode) replaceSpecialSyntax(program []string) ([]string){
+	for j := 0; j < len(varSyntaxNames); j++ {
+		name := varSyntaxNames[j]
+		value := varSyntaxSave[name].data.data
+		
+		program = Insert(program,name,value)
 	}
 
 	return program
@@ -448,6 +451,8 @@ func (data MethodData) runThrough (index int) {
 	program := data.data.data
 	for i := index; i < len(program); i++ {
 
+		program[i] = strings.TrimSpace(program[i])
+
 		done := data.scopeNode.checkSpecialFunctions(program[i])
 		if done {
 			continue
@@ -473,6 +478,12 @@ func (data MethodData) runThrough (index int) {
 
 		if scopeDeclaration(program[i]) {
 			i = data.scopeNode.declareScope(program,i)
+			continue
+		}
+
+		if strings.HasPrefix(program[i],"{") && strings.HasSuffix(program[i],"}") {
+			program[i] = data.scopeNode.replaceVars(program[i])
+			i = i-1
 			continue
 		}
 
@@ -724,9 +735,11 @@ func (caller ScopeNode) compute(value string) (Data) {
 
 	value = ""
 
-	for i := 0; i < len(elems); i++ {
-		value = elems[i] + " "
+	for i := 0; i < len(elems)-1; i++ {
+		value = value + elems[i] + " "
 	}
+
+	value = value + elems[len(elems)-1]
 
 	return Data{value}
 }
