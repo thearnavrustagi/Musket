@@ -5,3 +5,4 @@
 ### make automatic type inference
 #### allow function calling 
 ##### make something for user input
+### create rushFor loop with continues to create efficient code
