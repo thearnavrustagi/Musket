@@ -114,7 +114,12 @@ Well the one which I just developed is called var syntax
 	return arg2
   )
   ```
-  the first declaration with the comma is the official declaration the rest are syntactic sugar to beautify the code you can add or remove them in the methodSugar.txt file with the "|" delimeter<br>
+  the first declaration with the comma is the official declaration the rest are syntactic sugar to beautify the code you can add or remove them in the methodSugar.txt file with the "|" delimeter<br>Another thing to remember is that when you call functions with no parameters you have to use "()" like so
+  ```python
+  //main
+  display()
+  ```
+  assuming that their is some function that requires no parameters
 - ### Scoping
   Scoping is done by default in the program by that I basically mean that the values of one method don't go jumping in that of another method, you can also control it with scoping blocks an example is
   ```python
