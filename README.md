@@ -59,6 +59,7 @@ method add = (a,b){
   - [ ] relational                    
   - [ ] bitwise                       
 - [ ] PROGRAMMING FEATURES<br>
+  - [x] Lexical Variable Scoping
   - [x] Procedural programming        
   - [ ] Object Oriented Programming   
   - [x] Functional Programming   
@@ -67,7 +68,7 @@ method add = (a,b){
 - [x] ERROR_HANDELING
 ## Unique Features and Syntax
 Well the one which I just developed is called var syntax
-- ## VAR_SYNTAX<br>
+- ### VAR_SYNTAX<br>
   well this is basically that you assign a variable like this
   ```python
   var [var_name] <- {
@@ -113,7 +114,27 @@ Well the one which I just developed is called var syntax
 	return arg2
   )
   ```
-  the first declaration with the comma is the official declaration the rest are syntactic sugar to beautify the code you can add or remove them in the methodSugar.txt file with the "|" delimeter
+  the first declaration with the comma is the official declaration the rest are syntactic sugar to beautify the code you can add or remove them in the methodSugar.txt file with the "|" delimeter<br>
+- Scoping
+  Scoping is by default done in the program by that I basically mean that the values of one method don't go jumping in that of another method, you can also control it with scoping blocks an example is
+  ```python
+  method main = (){
+  	str = "hello"
+	
+	scope {
+		str = "bye"
+		print "{str}{str}"
+	}
+	
+	print "{str},world"
+  }
+  ```
+  in this code the output will be 
+  ```shell
+  byebye
+  hello,world
+  ```
+  so you can create temporary assignments in the code
 ## How to run<br>
 - ### using shell script<br>
   I have added shell script in the following code for faster execution **This will work in linux or any other UNIX os which use bash script** so the code is executed like so 
@@ -161,9 +182,6 @@ Well the one which I just developed is called var syntax
 the extension for the file should be .vpr<br><br>
 ## The code<br>
 Very simple clunky POP approach (believe me OOP is ammazing this POP almost killed me) but it has scope for improvement because after this I have to arrange it into packages then it will have amazing scalability
-### Version 0.5 (B3TA)<br>
-What you see up there is the DESIRED syntax I have handled basics such as printing and assignment but the if else is under developement 
-<br><br>
 ### About the name<br>
 well the name comes from the fact that i have created a language with robust and small syntax like python<br>It was named Snek initially but some friend of mine told me it was a sloppy name<br><br>
 #### future of the language<br>
