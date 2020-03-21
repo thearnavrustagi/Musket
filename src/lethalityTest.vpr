@@ -1,0 +1,4 @@
+method main = (){
+	print "hello, world"
+	# todo code
+}
