@@ -12,12 +12,18 @@ import (
 )
 const (
 	//errors
-	CMD_ARG_ERR string= "\u001B[40m\u001B[91mINVALID COMMAND\u001B[0m\n"
+	CMD_ARG_ERR string= "\u001B[91mINVALID COMMAND\u001B[0m\n"
 	METHOD_DECLARATION_ERR string = "The '{' token should not have any following token except new line feed or space"
 	INSUFFICIENT_VARS_ERR string = "the number of vars on the lhs dont match with the values on the rhs"
 	ALREADY_DECLARED_ERR string = "the variables have already been declared please remove the \"var\" specifier"
 	MAIN_MISSING_ERR string = "FATAL ERROR\nMETHOD MAIN IS MISSING"
 	BUILD_FAIL_ERR string = "FATAL ERROR\nBUILD FAILED"
+
+	//files
+	DEFAULT_EXEC_FILE = "lethalityTest.vpr"
+	//for method syntactic sugar
+	METHOD_SYNTACTIC_SUGAR_STORAGE = "methodSugar.txt"
+	SUGAR_DELIM = "|"
 
 	//syntax
 	FUNCTION_CALL string = "<<"
@@ -133,11 +139,9 @@ func main() {
 func InititializeCMD() [3]CmdArgs{
 	var argHandler[3] CmdArgs
 
-	defFile := "lethalityTest.vpr"
-
 	argHandler[0].action = func(args string) (bool,string){
 		if (strings.TrimSpace(args) == "run -d") {
-			str := CommenceReading(defFile)
+			str := CommenceReading(DEFAULT_EXEC_FILE)
 			return true,str
 		}
 		return false,""
@@ -253,7 +257,7 @@ func StaticallyInitialize(program []string) {
 	}
 
 	if buldFailure == true {
-		fmt.Println("\u001B[40m\u001B[91m",BUILD_FAIL_ERR,"\u001B[0m")
+		fmt.Println("\u001B[91m"+BUILD_FAIL_ERR,"\u001B[0m")
 	} else {
 		fmt.Println("\u001B[92mFIRST ASSIGNMENT RUN \nSTATUS: COMPLETE\u001B[0m\n")
 		StartExecution()
@@ -318,7 +322,7 @@ func getBlock(program []string,startIndex int,start rune,end rune) (Block,int){
 		}
 	}
 	if (startIndex == endIndex) {
-		fmt.Println("\u001B[40m\u001B[91m",METHOD_DECLARATION_ERR,"\u001B[0m\n","line:\t",startIndex+1)
+		fmt.Println("\u001B[91m"+METHOD_DECLARATION_ERR,"\u001B[0m\n","line:\t",startIndex+1)
 		buldFailure = true
 		return Block{},startIndex
 	}
@@ -341,7 +345,7 @@ func declare (line string,program []string,i int,check bool) {
 			temp := strings.Split(name,SYNTACTIC_ASSIGNMENT)
 			name = strings.TrimSpace(temp[0])
 			if testVarDeclaration(name) {
-				fmt.Println("\u001B[40m\u001B[91m",ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",i+1)
+				fmt.Println("\u001B[91m"+ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",i+1)
 				buldFailure = true
 			}
 			declareVarSyntax(name,program,i)
@@ -355,7 +359,7 @@ func declare (line string,program []string,i int,check bool) {
 
 			if (len(allVarNames) != len(allValues)) && (len(allValues) != 1){
 
-				fmt.Println("\u001B[40m\u001B[91m",INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
+				fmt.Println("\u001B[91m"+INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
 				buldFailure = true
 			}
 			if len(allValues) == 1 {
@@ -384,7 +388,7 @@ func StartExecution() {
 	}
 	err := callFunctionMAIN()
 	if err != "" {
-		fmt.Println("\u001B[40m\u001B[91m",err,"\u001B[0m\n")
+		fmt.Println("\u001B[91m"+err,"\u001B[0m\n")
 	}
 }
 
@@ -487,7 +491,7 @@ func assign (program []string,assignmentType string,i int) {
 		temp := strings.Split(line,SYNTACTIC_ASSIGNMENT)
 		name := strings.TrimSpace(temp[0])
 		if testVarDeclaration(name) {
-			fmt.Println("\u001B[40m\u001B[91m",ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",i+1)
+			fmt.Println("\u001B[91m"+ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",i+1)
 			buldFailure = true
 		}
 
@@ -501,7 +505,7 @@ func assign (program []string,assignmentType string,i int) {
 		allValues := strings.Split(temp[1],",")
 
 		if (len(allVarNames) != len(allValues)) && (len(allValues) != 1){
-			fmt.Println("\u001B[40m\u001B[91m",INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
+			fmt.Println("\u001B[91m"+INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
 		}
 		if len(allValues) == 1 {
 			assignToAll(allVarNames,allValues[0],i,false)
@@ -528,7 +532,7 @@ func assignToAll(varNames []string,value string,index int,check bool) {
 			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
 		}
 		if testVarDeclaration(varNames[i]) && check{
-			fmt.Println("\u001B[40m\u001B[91m",ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",index+1)
+			fmt.Println("\u001B[91m"+ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",index+1)
 		}
 		varSave[varNames[i]] = data
 	}
@@ -540,7 +544,7 @@ func assignAll(varNames []string,varValues []string,index int,check bool) {
 			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
 		}
 		if testVarDeclaration(varNames[i]) && check{
-			fmt.Println("\u001B[40m\u001B[91m",ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",index+1)
+			fmt.Println("\u001B[91m"+ALREADY_DECLARED_ERR,"\u001B[0m\nline:\t",index+1)
 		}
 		data := compute(varValues[i])
 		varSave[varNames[i]] = data
@@ -568,11 +572,53 @@ func functionCall(args string) (bool,string){
 }
 
 func callFunction (method string,name string) {
-	method = strings.TrimSpace(method)
+	method = removeSyntacticSugar(strings.TrimSpace(method))
 	param := string([]rune(method)[len(name)+1:])
+
 	assignmentSting := methodSave[name].parameters+" = "+param
 	methodSave[name].data.data[0] = assignmentSting
+
 	methodSave[name].runThrough()
+}
+
+func removeSyntacticSugar(method string) string{
+	data,ERR := ioutil.ReadFile(METHOD_SYNTACTIC_SUGAR_STORAGE)
+
+	if ERR != nil {
+		fmt.Print("\u001B[91m",ERR,"\u001B[0m\n")
+		os.Exit(0)
+		return ""
+	}
+
+	allSugar := strings.Split(string(data),"\n")
+
+	methArray := strings.Split(method," ")
+
+	returnArray := make([]string,len(methArray))
+
+	for i := 0; i < len(allSugar); i++ {
+		sugar := strings.Split(allSugar[i],SUGAR_DELIM)
+
+		for j := 0; j < len(returnArray); j++ {
+			for k:=0;k<len(sugar);k++ { 
+
+				returnArray[j] = methArray[j]
+				
+				if strings.TrimSpace(methArray[j]) == sugar[k] {
+					returnArray[j] = sugar[1]
+					break
+				}
+			}
+		}
+	}
+
+	returnString :=""
+
+	for i := 0; i < len(returnArray); i++ {
+		returnString = returnString+returnArray[i]+" "
+	}
+
+	return returnString
 }
 
 func checkSpecialFunctions(line string) {
