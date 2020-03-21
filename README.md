@@ -13,8 +13,8 @@ method main = (){ # comment
 
 	print "okay a is {a}|{b}|{c}|{x}\n" # the \n is compulsory
 	
-	x = subtract a,b
-	y = add a and b
+	var x = subtract a,b
+	var y = add a and b
 }
 
 var something <- {
@@ -97,7 +97,7 @@ Well the one which I just developed is called var syntax
   method main = (){
   	var a,b = 20,30
   	println "hello,world",num
-	add a and b
+	var x = add a and b
 	var c = (choose a or b)
   }
   method println = (str,num){
