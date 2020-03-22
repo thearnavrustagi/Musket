@@ -138,8 +138,8 @@ Well the one which I just developed is called var syntax
    [body]
   }
   ```
-  The interpreter will understand that you want to give no arguments
-  Function Calling is another thing that I feel is beautiful about the language why so? well here you go 
+  The interpreter will understand that you want to give no arguments<br>
+  **Function Calling** is another thing that I feel is beautiful about the language why so? well here you go 
   ```python
   func main{
   	var a,b = 20,30
