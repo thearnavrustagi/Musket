@@ -1,4 +1,11 @@
-method main = () {
-	input vad,"hello > "
-	print "{vad}"
+func main {
+	print "in main"
+	prnt 
+	prnto "hoho"
+}
+func prnt {
+	print "in prnt"
+}
+func prnto(in) {
+	print "{in}"
 }

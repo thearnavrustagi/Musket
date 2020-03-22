@@ -34,7 +34,7 @@ const (
 
 	COMMENT_START string = "#"
 
-	METHOD_DECLARATION string = "method"
+	METHOD_DECLARATION string = "func "
 	VAR_DECALRATION string = "var "
 	SCOPE_DECLARATION string = "scope "
 
@@ -238,10 +238,8 @@ func StaticallyInitialize(program []string) {
 		if strings.HasPrefix(program[i],METHOD_DECLARATION) {
 
 			parts := []rune(program[i])
-			name := string(parts[len(METHOD_DECLARATION):])
-			temp := strings.Split(name,NORMAL_ASSIGNMENT)
-			name = strings.TrimSpace(temp[0])
-			parameters := strings.TrimSpace(temp[1])
+			meth := string(parts[len(METHOD_DECLARATION):])
+			name,parameters := getNameAndParam(meth) 
 
 			endIndex := globalScope.declareMethod(name,parameters,program,i)
 
@@ -260,13 +258,33 @@ func StaticallyInitialize(program []string) {
 //	}
 }
 
+func getNameAndParam(meth string) (string,string){
+	meth = strings.TrimSpace(meth)
+	parts := []rune(meth)
+	if !strings.HasSuffix(meth,"{") {
+		parts = append(parts,' ')
+	}
+	parts[len(parts) - 1] = ' '
+	for i := 0; i < len(parts); i++ {
+		if parts[i] == '('{
+			name := string(parts[:i])
+			param := string(parts[i:])	
+			return strings.TrimSpace(name),param
+		}
+	}
+
+	return strings.TrimSpace(string(parts)),""
+}
+
 func (caller ScopeNode)declareMethod (name string,parameters string,program []string,index int) (int){
 	elems := []rune(strings.TrimSpace(parameters))
 
 	var startIndex,endIndex int
+	var hasParam bool
 
 	for i := 0; i < len(elems); i++ {
 		if elems[i] == '(' {
+			hasParam = true
 			startIndex = i
 			continue
 		}
@@ -276,8 +294,11 @@ func (caller ScopeNode)declareMethod (name string,parameters string,program []st
 			break
 		}
 	}
+	param := ""
 
-	param := string(elems[startIndex+1:endIndex])
+	if hasParam{
+		param = string(elems[startIndex+1:endIndex])
+	}
 
 	block,endIndex := getBlock(program,index,'{','}')
 
