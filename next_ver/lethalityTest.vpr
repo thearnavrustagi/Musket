@@ -1,11 +1,13 @@
-func main {
-	print "in main"
-	prnt 
-	prnto "hoho"
+func main{
+a = 30
+b = 20
+c = a + b
+add a and b
+print "{c}"
 }
-func prnt {
-	print "in prnt"
-}
-func prnto(in) {
-	print "{in}"
+func add (a,b){
+	a = 50
+	b = 50
+	c = a+b
+	print "{c}"
 }

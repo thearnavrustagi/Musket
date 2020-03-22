@@ -223,55 +223,86 @@ func InititializeOperators() {
 	PLUS := Operators{'+',
 	func(arg1 Data,arg2 Data)(string,bool){
 		if arg1.Type == NUMBER {
+
 			if arg2.Type == NUMBER {
+				
 				num1,_ := strconv.Atoi(arg1.value)
 				num2,_ := strconv.Atoi(arg2.value)
 				return strconv.Itoa((num1+num2)),true
+			
 			} else if arg2.Type == DOUBLE {
+				
 				dec := arg1.value+".0"
 				dec1,_ := strconv.ParseFloat(dec,64)
 				dec2,_ := strconv.ParseFloat(arg2.value,64)
 				return strconv.FormatFloat(dec1+dec2,'f',-1,64),true
+			
 			} else if arg2.Type == BOOLEAN {
 				fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
 				os.Exit(0)
+			
 			} else {
+			
 				return arg1.value+arg2.value,true
+			
 			}
+		
 		} else if arg1.Type == DOUBLE {
+			
 			if arg2.Type == DOUBLE {
+			
 				num1,_ := strconv.ParseFloat(arg1.value,64)
 				num2,_ := strconv.ParseFloat(arg2.value,64)
 				return strconv.FormatFloat(num1+num2,'f',-1,64),true
+			
 			} else if arg2.Type == NUMBER {
+			
 				dec := arg2.value+".0"
 				dec1,_ := strconv.ParseFloat(arg1.value,64)
 				dec2,_ := strconv.ParseFloat(dec,64)
 				return strconv.FormatFloat(dec1+dec2,'f',-1,64),true
+			
 			} else if arg2.Type == BOOLEAN {
+			
 				fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
 				os.Exit(0)
+			
 			} else {
+			
 				return arg1.value+arg2.value,true
+			
 			}
+		
 		} else if arg1.Type == BOOLEAN {
 
 			if arg2.Type == NUMBER {
+		
 				fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
 				os.Exit(0)
+		
 			} else if arg2.Type == DOUBLE {
+		
 				fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
 				os.Exit(0)
+		
 			} else if arg2.Type == BOOLEAN {
+		
 				val1,_ := strconv.ParseBool(arg1.value)
 				val2,_ := strconv.ParseBool(arg2.value)
 				return strconv.FormatBool(val1&&val2),true
+		
 			} else {
-				return arg1.value+arg1.value,true
+		
+				return arg1.value+arg2.value,true
+		
 			}
+		
 		} else {
-			return arg1.value+arg1.value,true
+		
+			return arg1.value+arg2.value,true
+		
 		}
+		
 		return NULL,true
 	}}
 	operators[string(PLUS.rep)] = PLUS
@@ -679,7 +710,7 @@ func (caller ScopeNode) assign (program []string,assignmentType string,i int) {
 		allValues := strings.Split(temp[1],",")
 
 		if (len(allVarNames) != len(allValues)) && (len(allValues) != 1){
-			fmt.Println("\u001B[91m"+INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
+			//mt.Println("\u001B[91m"+INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
 		}
 		if len(allValues) == 1 {
 			caller.assignToAll(allVarNames,allValues[0])
@@ -706,6 +737,8 @@ func (caller ScopeNode)assignToAll(varNames []string,value string) {
 		if strings.HasPrefix(varNames[i],VAR_DECALRATION) {
 			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
 		}
+		//fmt.Println("name:",varNames[i])
+
 		caller.varSave[varNames[i]] = data
 	}
 }
@@ -955,45 +988,43 @@ func createStringRep (line string,TYPE string) (string){
 	}
 }
 
-//compute is incomplete ##########################################3
 func (caller ScopeNode) compute(value string) (Data) {
-	value =  strings.TrimSpace(value)
-	elems := strings.Split(value," ")
-	for i := 0; i < len(elems); i++ {
-		if (elems[i] != "" || elems[i] != "" ){
-			value,found := caller.searchTreeFor(elems[i])
-			if found {
-				elems[i] = value.value
-			}
+	value = strings.TrimSpace(value)
+	if hasNoOperators(value) {
+		fmt.Println("no operators")		
+		Type := decipherType(strings.TrimSpace(value))
+		valueD := value
+
+		if Type == STRING {
+			valueD = "\""+value+"\""
 		}
+		
+		return Data{value,Type,createStringRep(valueD,Type)}
 	}
 
-	value = ""
-
-	for i := 0; i < len(elems)-1; i++ {
-		value = value + elems[i] + " "
-	}
-	value = value + elems[len(elems)-1]
-	
-	value = getFinalValue(value)
+	value = caller.applyOperators(value)
 
 	Type := decipherType(strings.TrimSpace(value))
 	valueD := value
 
 	if Type == STRING {
-		value = string([]rune(value)[1:len(value)-1])
 		valueD = "\""+value+"\""
 	}
-
+	
 	return Data{value,Type,createStringRep(valueD,Type)}
 }
 
-func getFinalValue (line string) (string) {
-	answer := multiSplitOperators(line)
-	return answer
+func hasNoOperators(args string) (bool){
+	ret := true
+
+	for i := 0; i < len(oprList); i++ {
+		ret = ret && !strings.Contains(args,string(oprList[i].rep))
+	}
+
+	return ret
 }
 
-func multiSplitOperators(line string) (string){
+func (caller ScopeNode) applyOperators(line string) (string){
 	var splitPoints []int
 	mapp := make(map[int]rune)
 	elems := []rune(" "+line)
@@ -1015,9 +1046,22 @@ func multiSplitOperators(line string) (string){
 	var parts []string
 
 	for i := 0; i < len(splitPoints)-1; i++ {
-		str := strings.TrimSpace(string(elems[splitPoints[i]+1:splitPoints[i+1]])) + string(mapp[splitPoints[i+1]])
-		parts = append(parts,str)
+		repr :=strings.TrimSpace(string(elems[splitPoints[i]+1:splitPoints[i+1]]))
+		val,found := caller.searchTreeFor(repr)
+		
+		fmt.Println("trying","|"+repr+"|")
+
+		if found {
+			fmt.Println("found ",repr,val)
+			str := val.value + string(mapp[splitPoints[i+1]])
+			parts = append(parts,str)
+		} else {
+			str := repr + string(mapp[splitPoints[i+1]])
+			parts = append(parts,str)
+		}
 	}
+
+	fmt.Println(parts)
 
 	for i := 0; i < len(parts); i++ {
 		symbol := []rune(parts[i])[len(parts[i])-1]
@@ -1047,13 +1091,17 @@ func (caller *DataNode) iterateAndAdd (element string,symbol rune) {
 func encapsulate (element string,symbol rune) (DataNode) {
 	element = strings.TrimSpace(element)
 	Type := decipherType(element)
-	data := Data{element,Type,createStringRep(element,Type)}
+	rep := createStringRep(element,Type)
+	if Type == STRING{
+		element = string([]rune(element)[1:len(element)-1])
+	}
+	data := Data{element,Type,rep}
 	pointer := NodePointer{&DataNode{},symbol}
 	return DataNode{data,pointer,true}
 }
 
 func (caller *DataNode) calculate () (string){
-	result := "resnull"
+	result := "\u001B[91m"+NULL+"\u001B[0m"
 	nextSymbol := ' '
 	for ((*(*caller).pointer.parent).pointer.parent.doesNotExist) {
 		child := *(*caller).pointer.parent
@@ -1066,7 +1114,6 @@ func (caller *DataNode) calculate () (string){
 			}
 		}
 
-		
 		nextSymbol = (*(*caller).pointer.parent).pointer.action
 		dataNode := encapsulate(result,nextSymbol)
 
@@ -1074,5 +1121,6 @@ func (caller *DataNode) calculate () (string){
 
 		(*caller).pointer.parent = &dataNode
 	}
+	fmt.Println(result)
 	return result
 }

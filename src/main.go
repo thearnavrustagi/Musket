@@ -7,6 +7,8 @@ import (
 	"os"
 	"io/ioutil"
 	"reflect"
+	"unicode"
+	"strconv"
 
 	//"compiler/cmd"
 )
@@ -46,10 +48,16 @@ const (
 	//special constants
 	NULL = "null"
 
+	//data types
+	NUMBER        = "|int|"
+	STRING        = "|str|"
+	BOOLEAN       = "|charge|"
+	DOUBLE        = "|double|"
+	SYSTEM_STRING = "|sys-str|"
 )
 //structs
 type actionFunc func(string) (bool,string)
-type arith func(string,string) (string)
+type oprAction func(Data,Data) (string,bool)
 
 type CmdArgs struct {
 	action actionFunc
@@ -57,6 +65,8 @@ type CmdArgs struct {
 
 type Data struct {
 	value string
+	Type string
+	stringRep string
 }
 
 type MethodData struct {
@@ -78,16 +88,37 @@ type Block struct {
 	data []string
 }
 
+type Operators struct {
+	rep rune
+	action oprAction
+}
+
+type DataNode struct {
+	data Data
+	pointer NodePointer
+	doesNotExist bool
+}
+
+type NodePointer struct {
+	parent *DataNode
+	action rune
+}
+
+
 var varSyntaxSave map[string]VarSyntaxData
 var varSyntaxNames []string
 var methodSave map[string]*MethodData
 var methodNames []string
 var globalScope ScopeNode
+//operators
+var operators map[string]Operators
+var oprList []Operators
 
 var buldFailure bool
 
 func main() {
 	argHandler := InititializeCMD()
+	InititializeOperators()
 	args := getUserArgs()
 	
 	if args != "shell" {
@@ -119,6 +150,10 @@ func main() {
 			nullifyData()
 		}
 	}
+}
+
+func PrintBug(str string) {
+	fmt.Println(str)
 }
 
 func nullifyData() {
@@ -164,6 +199,115 @@ func InititializeCMD() [3]CmdArgs{
 	}
 
 	return argHandler
+}
+
+/*
+for personal reference
+
+PLUS
+MINUS
+MULT
+DIVIDE
+PERCENT
+COMMA
+*/
+
+func InititializeOperators() {
+	operators = make(map[string]Operators)
+	/*pass := Operators{' ',
+	func(arg1,arg2 Data) (string,bool){
+		fmt.Println(arg1,"<arg1\targ2>",arg2)
+		return arg1.value,true
+	}}*/
+
+	PLUS := Operators{'+',
+	func(arg1 Data,arg2 Data)(string,bool){
+		if arg1.Type == NUMBER {
+
+			if arg2.Type == NUMBER {
+				
+				num1,_ := strconv.Atoi(arg1.value)
+				num2,_ := strconv.Atoi(arg2.value)
+				return strconv.Itoa((num1+num2)),true
+			
+			} else if arg2.Type == DOUBLE {
+				
+				dec := arg1.value+".0"
+				dec1,_ := strconv.ParseFloat(dec,64)
+				dec2,_ := strconv.ParseFloat(arg2.value,64)
+				return strconv.FormatFloat(dec1+dec2,'f',-1,64),true
+			
+			} else if arg2.Type == BOOLEAN {
+				fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
+				os.Exit(0)
+			
+			} else {
+			
+				return arg1.value+arg2.value,true
+			
+			}
+		
+		} else if arg1.Type == DOUBLE {
+			
+			if arg2.Type == DOUBLE {
+			
+				num1,_ := strconv.ParseFloat(arg1.value,64)
+				num2,_ := strconv.ParseFloat(arg2.value,64)
+				return strconv.FormatFloat(num1+num2,'f',-1,64),true
+			
+			} else if arg2.Type == NUMBER {
+			
+				dec := arg2.value+".0"
+				dec1,_ := strconv.ParseFloat(arg1.value,64)
+				dec2,_ := strconv.ParseFloat(dec,64)
+				return strconv.FormatFloat(dec1+dec2,'f',-1,64),true
+			
+			} else if arg2.Type == BOOLEAN {
+			
+				fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
+				os.Exit(0)
+			
+			} else {
+			
+				return arg1.value+arg2.value,true
+			
+			}
+		
+		} else if arg1.Type == BOOLEAN {
+
+			if arg2.Type == NUMBER {
+		
+				fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
+				os.Exit(0)
+		
+			} else if arg2.Type == DOUBLE {
+		
+				fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
+				os.Exit(0)
+		
+			} else if arg2.Type == BOOLEAN {
+		
+				val1,_ := strconv.ParseBool(arg1.value)
+				val2,_ := strconv.ParseBool(arg2.value)
+				return strconv.FormatBool(val1&&val2),true
+		
+			} else {
+		
+				return arg1.value+arg2.value,true
+		
+			}
+		
+		} else {
+		
+			return arg1.value+arg2.value,true
+		
+		}
+		
+		return NULL,true
+	}}
+	operators[string(PLUS.rep)] = PLUS
+
+	oprList = append(oprList,PLUS)
 }
 
 func getUserArgs() string{
@@ -469,7 +613,7 @@ func callFunctionMAIN() (string){
 		return MAIN_MISSING_ERR
 	}
 	data := MethodData{main.parameters,main.data,main.scopeNode}
-	data.runThrough(1)
+	data.runThrough(0)
 	return ""
 }
 
@@ -515,9 +659,14 @@ func (data MethodData) runThrough (index int) {
 		}
 
 		if strings.HasPrefix(program[i],"{") && strings.HasSuffix(program[i],"}") {
-			program[i] = data.scopeNode.replaceVars(program[i])
-			i = i-1
-			continue
+			str := string([]rune(program[i])[1:len(program[i])-1])
+			val,found := data.scopeNode.searchTreeFor(str)
+			value := val.value
+			if found{
+				program[i] = value
+				i = i-1
+				continue
+			}
 		}
 
 		funcCall,methodName := functionCall(program[i])
@@ -561,7 +710,7 @@ func (caller ScopeNode) assign (program []string,assignmentType string,i int) {
 		allValues := strings.Split(temp[1],",")
 
 		if (len(allVarNames) != len(allValues)) && (len(allValues) != 1){
-			fmt.Println("\u001B[91m"+INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
+			//mt.Println("\u001B[91m"+INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
 		}
 		if len(allValues) == 1 {
 			caller.assignToAll(allVarNames,allValues[0])
@@ -588,6 +737,8 @@ func (caller ScopeNode)assignToAll(varNames []string,value string) {
 		if strings.HasPrefix(varNames[i],VAR_DECALRATION) {
 			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
 		}
+		//fmt.Println("name:",varNames[i])
+
 		caller.varSave[varNames[i]] = data
 	}
 }
@@ -731,7 +882,7 @@ func (caller ScopeNode) replaceVars (statement string) (string){
 			pureName := string([]rune(varName)[1:len(varName)-1])
 			value,found := caller.searchTreeFor(pureName)
 			if found {
-				statement = strings.Replace(statement,varName,value,1)
+				statement = strings.Replace(statement,varName,value.stringRep,1)
 			} else {
 				statement = strings.Replace(statement,varName,NULL,1)
 			}
@@ -742,15 +893,15 @@ func (caller ScopeNode) replaceVars (statement string) (string){
 	return statement
 }
 
-func (caller ScopeNode)searchTreeFor(name string) (string,bool){
+func (caller ScopeNode)searchTreeFor(name string) (Data,bool){
 	found := false
 	itrnext := true
 	presentNode := &caller
 	for !found {
 		if itrnext {
-			data := presentNode.varSave[name].value
+			data := presentNode.varSave[name].stringRep
 			if data != "" {
-				return data,true
+				return presentNode.varSave[name],true
 			}
 			if (reflect.DeepEqual(presentNode.parent.varSave,globalScope.varSave)){
 				presentNode = presentNode.parent
@@ -760,11 +911,11 @@ func (caller ScopeNode)searchTreeFor(name string) (string,bool){
 				presentNode = presentNode.parent
 			}
 		} else {
-			return "",false
+			return Data{},false
 		}
 	}
 
-	return "",false
+	return Data{},false
 }
 
 func (caller ScopeNode) takeInput (line string) {
@@ -784,34 +935,192 @@ func (caller ScopeNode) takeInput (line string) {
 	caller.pure_print(PURE_PRINT+" "+parts[1]+"\"")
 	reader := bufio.NewReader(os.Stdin)
 	str,_ := reader.ReadString('\n')
+	nstr := "\""+str+"\""
 
-	caller.varSave[parts[0]] = Data{str}
+	caller.varSave[parts[0]] = Data{nstr,STRING,str}
 }
 
 func functionReturn(line string) {
 
 }
 
-//compute is incomplete ##########################################3
+func decipherType (args string) (string) {
+	//checking string
+	condition1 := strings.HasPrefix(args,"\"") || strings.HasPrefix(args,"'")
+	condition2 := strings.HasSuffix(args,"\"") || strings.HasSuffix(args,"'")
+	if condition1 && condition2 {
+		return STRING
+	}
+
+	//checking if double
+	if strings.Contains(args,".") {
+		return DOUBLE
+	}
+
+	//checking number
+	temp := []rune(args)
+	itIsADigit := true
+	for i := 0; i < len(temp); i++ {
+		itIsADigit = itIsADigit && unicode.IsDigit(temp[i])
+	}
+	if itIsADigit {
+		return NUMBER
+	}
+
+
+	//checking if charge [boolean]
+	if args == "true" || args == "false" {
+		return BOOLEAN
+	}
+
+	return SYSTEM_STRING
+
+}
+
+func createStringRep (line string,TYPE string) (string){
+	switch TYPE {
+	case STRING:
+		return "\u001B[96m"+string([]rune(line)[1:len(line)-1])+"\u001B[0m"
+	case SYSTEM_STRING:
+		return "\u001B[95m"+line+"\u001B[0m"
+	default:
+		return "\u001B[96m"+strings.TrimSpace(line)+"\u001B[0m"
+	}
+}
+
 func (caller ScopeNode) compute(value string) (Data) {
-	value =  strings.TrimSpace(value)
-	elems := strings.Split(value," ")
-	for i := 0; i < len(elems); i++ {
-		if (elems[i] != "" || elems[i] != "" ){
-			value,found := caller.searchTreeFor(elems[i])
-			if found {
-				elems[i] = value
+	value = strings.TrimSpace(value)
+	if hasNoOperators(value) {
+		fmt.Println("no operators")		
+		Type := decipherType(strings.TrimSpace(value))
+		valueD := value
+
+		if Type == STRING {
+			valueD = "\""+value+"\""
+		}
+		
+		return Data{value,Type,createStringRep(valueD,Type)}
+	}
+
+	value = caller.applyOperators(value)
+
+	Type := decipherType(strings.TrimSpace(value))
+	valueD := value
+
+	if Type == STRING {
+		valueD = "\""+value+"\""
+	}
+	
+	return Data{value,Type,createStringRep(valueD,Type)}
+}
+
+func hasNoOperators(args string) (bool){
+	ret := true
+
+	for i := 0; i < len(oprList); i++ {
+		ret = ret && !strings.Contains(args,string(oprList[i].rep))
+	}
+
+	return ret
+}
+
+func (caller ScopeNode) applyOperators(line string) (string){
+	var splitPoints []int
+	mapp := make(map[int]rune)
+	elems := []rune(" "+line)
+
+	headPointer := &DataNode{Data{},NodePointer{&DataNode{Data{},NodePointer{},false},' '},true}
+
+	splitPoints = append(splitPoints,0)
+	for i := 0; i < len(oprList); i++ {
+		for j:=0;j<len(elems);j++ {
+			if elems[j] == oprList[i].rep {
+				splitPoints = append(splitPoints,j)
+				mapp[j] = oprList[i].rep
 			}
 		}
 	}
 
-	value = ""
+	splitPoints = append(splitPoints,len(elems))
 
-	for i := 0; i < len(elems)-1; i++ {
-		value = value + elems[i] + " "
+	var parts []string
+
+	for i := 0; i < len(splitPoints)-1; i++ {
+		repr :=strings.TrimSpace(string(elems[splitPoints[i]+1:splitPoints[i+1]]))
+		val,found := caller.searchTreeFor(repr)
+		
+		fmt.Println("trying","|"+repr+"|")
+
+		if found {
+			fmt.Println("found ",repr,val)
+			str := val.value + string(mapp[splitPoints[i+1]])
+			parts = append(parts,str)
+		} else {
+			str := repr + string(mapp[splitPoints[i+1]])
+			parts = append(parts,str)
+		}
 	}
 
-	value = value + elems[len(elems)-1]
+	fmt.Println(parts)
 
-	return Data{value}
+	for i := 0; i < len(parts); i++ {
+		symbol := []rune(parts[i])[len(parts[i])-1]
+		parts[i] = string([]rune(parts[i])[:len(parts[i])-1])
+		headPointer.iterateAndAdd(parts[i],symbol)
+	}
+
+	answer := headPointer.calculate()
+	return answer
+}
+
+func (caller *DataNode) iterateAndAdd (element string,symbol rune) {
+	presentNode := &caller
+	done := false
+
+	for !done{
+		if !((**presentNode).pointer.parent.doesNotExist) {
+			dataNode := encapsulate(element,symbol)
+			(*presentNode).pointer.parent = &dataNode
+			break
+		} else {
+			presentNode = &(**presentNode).pointer.parent
+		}
+	}
+}
+
+func encapsulate (element string,symbol rune) (DataNode) {
+	element = strings.TrimSpace(element)
+	Type := decipherType(element)
+	rep := createStringRep(element,Type)
+	if Type == STRING{
+		element = string([]rune(element)[1:len(element)-1])
+	}
+	data := Data{element,Type,rep}
+	pointer := NodePointer{&DataNode{},symbol}
+	return DataNode{data,pointer,true}
+}
+
+func (caller *DataNode) calculate () (string){
+	result := "\u001B[91m"+NULL+"\u001B[0m"
+	nextSymbol := ' '
+	for ((*(*caller).pointer.parent).pointer.parent.doesNotExist) {
+		child := *(*caller).pointer.parent
+		parent := (*(*(*caller).pointer.parent).pointer.parent)
+
+		for i := 0; i < len(oprList); i++ {
+			if oprList[i].rep == child.pointer.action {
+				result,_ = oprList[i].action(child.data,parent.data)
+				break
+			}
+		}
+
+		nextSymbol = (*(*caller).pointer.parent).pointer.action
+		dataNode := encapsulate(result,nextSymbol)
+
+		dataNode.pointer.parent = parent.pointer.parent
+
+		(*caller).pointer.parent = &dataNode
+	}
+	fmt.Println(result)
+	return result
 }
