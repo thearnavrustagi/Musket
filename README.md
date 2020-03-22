@@ -50,7 +50,7 @@ func add (a,b){
  PRESENT SYNTAX <br>
  - [ ] SYNTAX<br>
    - [x] normal assignment
-   - [x] forced assignment
+   - [x] syntax assignment
    - [X] printing                      
    - [x] user input                    
    - [ ] type variables                
@@ -126,7 +126,7 @@ Well the one which I just developed is called var syntax
   ```
   both are eligible syntax
 - ### Function Calling and declaration
-  Declaration is very simple and like go
+  **Declaration** is very simple and like golang
   ```python
   func [name] ([args]) {
   	[body]
@@ -186,8 +186,59 @@ Well the one which I just developed is called var syntax
   hello,world
   ```
   so you can create temporary assignments in the code
-- ### Input and printing
-  So to take you have a simple line
+- ### Variable Declarations
+  I have added a formal variable declaration syntax in the language that is 
+  ```python
+  var [name,[name]....] = [value,[value]....]
+  ```
+  but the preffered way should be 
+  ```python
+  [name,[name]....] = [value,[value]....]
+  ```
+  now the interpreter accepts two ways of statically assigning values which are
+  ```python
+  [name,[name]....] = [value]
+  or
+  [name,[name]....] = [value,[value]....]
+  ```
+  in the first one all the names will be assigned to the given value and in the second one each name will have its own value due to which it will throw an error or will fail to assign if the number of variables on the left side are not equal to the ones on the left
+- ### Data types
+  the presently available data types are :-<br>
+  - ##### Number
+    A generic integer<br>declaration
+    ```
+    num  = 7878
+    ```
+  - ##### Double
+    a floating point number<br>declaration
+    ```
+    doub = 5634.834874
+    ```
+  - ##### Charge
+    this is an alias for boolean it can have values such as
+    - true     false
+    - plus     minus
+    declaration
+    ```
+    bool = true
+    ```
+  - ##### String
+    an array of characters or a line of legible characters<br>declaration
+    ```
+    str = "some string"
+    ```
+  - ##### System-string
+    now this is a string which is a shrunken down version of the variable syntax and can be used to interact directly with the language<br>declaration
+    ```
+    sys_str = print "hello world"
+    ```
+    now in this snippet if I write 
+    ```
+    {str}
+    ```
+    somewhere in the program later on it will become print "hello world" and the code will print hello world at that point if you print a system string then it will be printed in purple color
+- ### Special Functions
+  So to take input you have a simple line
   ```python
   input [var],[line to print in double quotes]
   ```
