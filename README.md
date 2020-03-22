@@ -104,16 +104,28 @@ Well the one which I just developed is called var syntax
   - #### RUN 2
     In this run the variable syntax is exchanged in every method 
   - #### RUN 3
-    This is the final execution in this method main is called and if it does not exist then the remenent of the program with the methods and variable syntax excluded is converted into the main method 
+    This is the final execution in this method main is called and if it does not exist then the remenent of the program with the methods and variable syntax excluded is converted into the main method <br>
+  
   Thus it is possible for you to write python's informal syntax in this language but also c++'s formal syntax both are welcomed with open hands
   example
   ```python
   print "hello world"
   printf "hello" and "world"
-  methood printf = (name1,name2){
+  method printf = (name1,name2){
   	pure_print("{name1} {name2}")
   }
   ```
+  or
+  ```python
+  method main = (){
+  	print "hello world"
+  	printf "hello" and "world"	
+  }
+  method printf = (name1,name2){
+  	pure_print("{name1} {name2}")
+  }
+  ```
+  both are eligible syntax
 - ### Function Calling
   This is another thing that I feel is beautiful about the language why so? well here you go 
   ```python
@@ -162,6 +174,20 @@ Well the one which I just developed is called var syntax
   hello,world
   ```
   so you can create temporary assignments in the code
+- ### Input and printing
+  So to take you have a simple line
+  ```python
+  input [var],[line to print in double quotes]
+  ```
+  so just like in python the line will be printed and you have to write your option in it and it will get stored in the variable "var" which you can use later
+  <br><br>
+  Now there are two types of print statements print and pure_print<br>
+  ```python
+  print[args in double quotes]
+  and
+  pure_print[args in double quotes]
+  ```
+  print is equivalent to System.out.println() and pure_print is equivalent to System.out.print()
 ## How to run<br>
 - ### using shell script<br>
   I have added shell script in the following code for faster execution **This will work in linux or any other UNIX os which use bash script** so the code is executed like so 
