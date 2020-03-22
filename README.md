@@ -57,7 +57,7 @@ func add (a,b){
    - [ ] if/else                       
    - [ ] while/for                      
 - [ ] OPERATORS<br>
-  - [ ] arithmatic                    
+  - [x] arithmatic                    
   - [ ] logical                       
   - [ ] relational                    
   - [ ] bitwise                       
