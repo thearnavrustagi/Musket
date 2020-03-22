@@ -1,13 +1,4 @@
-func main{
-a = 30
-b = 20
-c = a + b
-add a and b
-print "{c}"
-}
-func add (a,b){
-	a = 50
-	b = 50
-	c = a+b
-	print "{c}"
-}
+bool = plus
+boolo = plus
+b = bool + boolo
+print "{b}"

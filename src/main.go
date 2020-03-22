@@ -286,9 +286,21 @@ func InititializeOperators() {
 				os.Exit(0)
 		
 			} else if arg2.Type == BOOLEAN {
+				var1,var2 := arg1.value,arg2.value
+				if var1 == "plus" {
+					var1 = "true"
+				} else if var1 == "minus" {
+					var1 = "false"
+				}
+
+				if var2 == "plus" {
+					var2 = "true"
+				} else if var2 == "minus" {
+					var2 = "false"
+				}
 		
-				val1,_ := strconv.ParseBool(arg1.value)
-				val2,_ := strconv.ParseBool(arg2.value)
+				val1,_ := strconv.ParseBool(var1)
+				val2,_ := strconv.ParseBool(var2)
 				return strconv.FormatBool(val1&&val2),true
 		
 			} else {
@@ -969,7 +981,7 @@ func decipherType (args string) (string) {
 
 
 	//checking if charge [boolean]
-	if args == "true" || args == "false" {
+	if args == "true"||args == "plus"||args == "minus"||args == "false" {
 		return BOOLEAN
 	}
 
@@ -981,6 +993,12 @@ func createStringRep (line string,TYPE string) (string){
 	switch TYPE {
 	case STRING:
 		return "\u001B[96m"+string([]rune(line)[1:len(line)-1])+"\u001B[0m"
+	case BOOLEAN:
+		if line == "plus" || line == "true"{
+			return "true"
+		} else {
+			return "false"
+		}
 	case SYSTEM_STRING:
 		return "\u001B[95m"+line+"\u001B[0m"
 	default:
