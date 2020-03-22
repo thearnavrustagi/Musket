@@ -1,12 +1,4 @@
 method main = () {
-	vad = print "yolo"
-	str = hello
-
-	rtd
-
-	print "{str}, world {vad}"
-}
-
-var rtd <- {
-	{vad}
+	input vad,"hello > "
+	print "{vad}"
 }

@@ -15,6 +15,7 @@ const (
 	CMD_ARG_ERR string= "\u001B[91mINVALID COMMAND\u001B[0m\n"
 	METHOD_DECLARATION_ERR string = "The '{' token should not have any following token except new line feed or space"
 	INSUFFICIENT_VARS_ERR string = "the number of vars on the lhs dont match with the values on the rhs"
+	INSUFFICIENT_ARGS_FOR_INPUT_ERR string = "input statement should have 2 arguments (var,\"line\")\nthe line will br printed and \nvar will be assigned the value to"
 	MAIN_MISSING_ERR string = "FATAL ERROR\nMETHOD MAIN IS MISSING"
 	BUILD_FAIL_ERR string = "FATAL ERROR\nBUILD FAILED"
 
@@ -39,6 +40,8 @@ const (
 
 	//special syntax
 	PRINTING string = "print "
+	PURE_PRINT string = "pure_print "
+	INPUT string = "input "
 
 	//special constants
 	NULL = "null"
@@ -240,7 +243,9 @@ func StaticallyInitialize(program []string) {
 			name = strings.TrimSpace(temp[0])
 			parameters := strings.TrimSpace(temp[1])
 
-			i = globalScope.declareMethod(name,parameters,program,i)
+			endIndex := globalScope.declareMethod(name,parameters,program,i)
+
+			program = deleteBlock(program,i,endIndex)
 		}
 		if declarable(program[i]) {
 			globalScope.declare(program[i],program,i,true)
@@ -251,7 +256,7 @@ func StaticallyInitialize(program []string) {
 //		fmt.Println("\u001B[91m"+BUILD_FAIL_ERR,"\u001B[0m")
 //	} else {
 		fmt.Println("\u001B[92mFIRST ASSIGNMENT RUN \nSTATUS: COMPLETE\u001B[0m\n")
-		StartExecution()
+		StartExecution(program)
 //	}
 }
 
@@ -273,6 +278,7 @@ func (caller ScopeNode)declareMethod (name string,parameters string,program []st
 	}
 
 	param := string(elems[startIndex+1:endIndex])
+
 	block,endIndex := getBlock(program,index,'{','}')
 
 	node := MethodData{param,block, ScopeNode{&caller,make(map[string]Data)}}
@@ -373,24 +379,23 @@ func declareVarSyntax(name string,program []string,index int) ([]string){
 	return program
 }
 
-func StartExecution() {
+func StartExecution(program []string) {
 	for i := 0; i < len(methodNames); i++ {
-		scpNd := methodSave[methodNames[i]].scopeNode
 		param := methodSave[methodNames[i]].parameters
 		data := methodSave[methodNames[i]].data.data
 		scopeNode := methodSave[methodNames[i]].scopeNode
 
-		methodSave[methodNames[i]] = &MethodData{param , Block{scpNd.replaceSpecialSyntax(data)} , scopeNode }
+		methodSave[methodNames[i]] = &MethodData{param , Block{replaceSpecialSyntax(data)} , scopeNode }
 
 		fmt.Println("\u001B[92mVAR SYNTAX REPLACEMENT IN METHOD [",methodNames[i],"] \nSTATUS: COMPLETE\u001B[0m\n")
 	}
 	err := callFunctionMAIN()
 	if err != "" {
-		fmt.Println("\u001B[91m"+err,"\u001B[0m\n")
+		autoCreateFunctionMAIN(program)
 	}
 }
 
-func (caller ScopeNode) replaceSpecialSyntax(program []string) ([]string){
+func replaceSpecialSyntax(program []string) ([]string){
 	for j := 0; j < len(varSyntaxNames); j++ {
 		name := varSyntaxNames[j]
 		value := varSyntaxSave[name].data.data
@@ -439,12 +444,19 @@ func moveRight (program []string,index int,times int) []string{
 func callFunctionMAIN() (string){
 	fmt.Println("\u001B[92mEXECUTION ENVIRONMENT SET\nCODE EXECUTION STARTING\u001B[0m\n\n")
 	main := methodSave["main"]
-	var data MethodData = MethodData{main.parameters,main.data,main.scopeNode}
-	if len(data.data.data) == 0 {
+	if methodSave["main"] == nil {
 		return MAIN_MISSING_ERR
 	}
+	data := MethodData{main.parameters,main.data,main.scopeNode}
 	data.runThrough(1)
 	return ""
+}
+
+func autoCreateFunctionMAIN (program []string) {
+	main := MethodData{"",Block{program},ScopeNode{&globalScope,make(map[string]Data)}}
+	main.data.data = replaceSpecialSyntax(main.data.data)
+	methodSave["main"] = &main
+	callFunctionMAIN()
 }
 
 func (data MethodData) runThrough (index int) {
@@ -648,6 +660,15 @@ func (caller ScopeNode) checkSpecialFunctions(line string) (bool){
 		caller.print(line)
 		return true
 	}
+
+	if strings.HasPrefix(line,PURE_PRINT) {
+		caller.pure_print(line)
+		return true
+	}
+
+	if strings.HasPrefix(line,INPUT) {
+		caller.takeInput(line)
+	}
 	return false
 }
 
@@ -655,7 +676,16 @@ func (caller ScopeNode) print(statement string) {
 	statement = strings.TrimSpace(statement)
 	statement = string([]rune(statement)[len(PRINTING)+1:len(statement)-1])
 	statement = caller.replaceVars(statement)
+
 	fmt.Println("\u001B[96m"+statement+"\u001B[0m")
+}
+
+func (caller ScopeNode) pure_print (statement string) {
+	statement = strings.TrimSpace(statement)
+	statement = string([]rune(statement)[len(PURE_PRINT)+1:len(statement)-1])
+	statement = caller.replaceVars(statement)
+
+	fmt.Print("\u001B[96m"+statement+"\u001B[0m")
 }
 
 func (caller ScopeNode) replaceVars (statement string) (string){
@@ -714,6 +744,27 @@ func (caller ScopeNode)searchTreeFor(name string) (string,bool){
 	}
 
 	return "",false
+}
+
+func (caller ScopeNode) takeInput (line string) {
+	line = strings.TrimSpace(line)
+	line = string([]rune(line)[len(INPUT):len(line)-1])
+
+	parts := strings.Split(line,",")
+
+	if len(parts) < 2 || len(parts) > 2 {
+		fmt.Println("\u001B[91m"+INSUFFICIENT_ARGS_FOR_INPUT_ERR,"\u001B[0m\n")
+		os.Exit(0)
+	}
+
+	parts[0] = strings.TrimSpace(parts[0])
+	parts[1] = string([]rune(parts[1])[1:])
+
+	caller.pure_print(PURE_PRINT+" "+parts[1]+"\"")
+	reader := bufio.NewReader(os.Stdin)
+	str,_ := reader.ReadString('\n')
+
+	caller.varSave[parts[0]] = Data{str}
 }
 
 func functionReturn(line string) {
