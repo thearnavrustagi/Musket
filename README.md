@@ -52,7 +52,7 @@ func add (a,b){
    - [x] normal assignment
    - [x] forced assignment
    - [X] printing                      
-   - [ ] user input                    
+   - [x] user input                    
    - [ ] type variables                
    - [ ] if/else                       
    - [ ] while/for                      
