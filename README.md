@@ -20,11 +20,11 @@ var something <- {
 	var = {yulo}
 }
 
-method subtract = (a,b){
+func subtract (a,b){
 	return a-b
 }
 
-method add = (a,b){
+func add (a,b){
 	return a+b
 }
  ```
@@ -86,11 +86,10 @@ Well the one which I just developed is called var syntax
   ```
   on being called the place where the name was will be changed by its body now why I say changes well let me give you an example
   ```python
-  method main = (){
-  	var a,b = 20,30
-  	add
-  	print "the sum of a and b is {c}"
-  }
+  var a,b = 20,30
+  add
+  print "the sum of a and b is {c}"
+  
   var add <- {
   	var c = a + b 
   }
@@ -110,38 +109,51 @@ Well the one which I just developed is called var syntax
   example
   ```python
   print "hello world"
-  printf "hello" and "world"
-  method printf = (name1,name2){
+  printf "hello and "world"
+  func printf (name1,name2){
   	pure_print("{name1} {name2}")
   }
   ```
   or
   ```python
-  method main = (){
+  func main {
   	print "hello world"
   	printf "hello" and "world"	
   }
-  method printf = (name1,name2){
+  func printf = (name1,name2){
   	pure_print("{name1} {name2}")
   }
   ```
   both are eligible syntax
-- ### Function Calling
-  This is another thing that I feel is beautiful about the language why so? well here you go 
+- ### Function Calling and declaration
+  Declaration is very simple and like go
   ```python
-  method main = (){
+  func [name] ([args]) {
+  	[body]
+  }
+  ```
+  now an important thing to note is the fact that the starting curly brace or '{' should always be **AFTER** the ([args]) or else the code will not execute another thing is that if you want to give no arguments to some function like main you can ommit the ([args]) part just like this 
+  ```python
+  func [name] {
+   [body]
+  }
+  ```
+  The interpreter will understand that you want to give no arguments
+  Function Calling is another thing that I feel is beautiful about the language why so? well here you go 
+  ```python
+  func main{
   	var a,b = 20,30
   	println "hello,world",num
 	var x = add a and b
 	var c = (choose a or b)
   }
-  method println = (str,num){
+  func println(str,num){
   	print "{str}{num}"
   }
-  method add = (arg1,arg2){
+  func add (arg1,arg2){
   	return (arg+var)
   }
-  method choose = (arg1,arg2)(
+  func choose (arg1,arg2)(
   	if arg1>arg2 {
 		return arg1
 	}
@@ -157,7 +169,7 @@ Well the one which I just developed is called var syntax
 - ### Scoping
   Scoping is done by default in the program by that I basically mean that the values of one method don't go jumping in that of another method, you can also control it with scoping blocks an example is
   ```python
-  method main = (){
+  func main = (){
   	str = "hello"
 	
 	scope {
