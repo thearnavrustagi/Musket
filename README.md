@@ -4,19 +4,16 @@ code is in developement stage please wait for a release
  The language is as follows
 ```python
 __________VIPER_____________
-method main = (){ # comment
-	x = 20
-	a,b,c = 10,15,17
-	x = 30
-	test = "x - y"
+x = 20
+a,b,c = 10,15,17
+x = 30
+test = "x - y"
+something
 
-	something
-
-	print "okay a is {a}|{b}|{c}|{x}"
+print "okay a is {a}|{b}|{c}|{x}"
 	
-	var x = subtract a,b
-	var y = add a and b
-}
+var x = subtract a,b
+var y = add a and b
 
 var something <- {
 	print "hello"
@@ -71,6 +68,7 @@ method add = (a,b){
   - [x] Functional Programming   
   - [x] Variable Syntax
   - [ ] Smart Interpreter
+  - [x] Auto Main
 - [x] ERROR_HANDELING
 ## Unique Features and Syntax
 Well the one which I just developed is called var syntax
@@ -98,6 +96,24 @@ Well the one which I just developed is called var syntax
   }
   ```
   yes this is eligible syntax but will not work right now well because I have not handled the calculation part (yes the language is even more useless then before but well calculation implementations are easy and redundant)
+- ### Automatic main Creation
+  Well now there is no need to define a main method all you have to do is write code like you do in pyhon the interpreter will automatically create a main function for you if there is not one now this is where my language overtakes python let me explain in detail<br><br>
+  When I was doing python there were two things that did not sync with me one was the fact that no blocks existed like no curly braces just tabs and that did no appeal to me next was the fact that you had to put the "def" block before actually calling the function so due to this the code was untidy and was harder to debug<br>now to fix it I implemented a different way of interpretting the file and that is the three run way<br>This causes speed depreciation but better execution now let me explain every run<br>
+  - #### RUN 1
+    In this run the methods,global variables and variable syntax is defined and stored
+  - #### RUN 2
+    In this run the variable syntax is exchanged in every method 
+  - #### RUN 3
+    This is the final execution in this method main is called and if it does not exist then the remenent of the program with the methods and variable syntax excluded is converted into the main method 
+  Thus it is possible for you to write python's informal syntax in this language but also c++'s formal syntax both are welcomed with open hands
+  example
+  ```python
+  print "hello world"
+  printf "hello" and "world"
+  methood printf = (name1,name2){
+  	pure_print("{name1} {name2}")
+  }
+  ```
 - ### Function Calling
   This is another thing that I feel is beautiful about the language why so? well here you go 
   ```python
