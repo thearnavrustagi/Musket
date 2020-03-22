@@ -216,8 +216,8 @@ Well the one which I just developed is called var syntax
     ```
   - ##### Charge
     this is an alias for boolean it can have values such as
-    - true     false
-    - plus     minus
+    - true false
+    - plus minus<br>
     declaration
     ```
     bool = true
