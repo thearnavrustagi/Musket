@@ -1,8 +1,22 @@
-row = true
-col = true
-mag = rue
-if row,col,mag are equal {
-	print "hahahahah"
-	print "in if"
-	print "will execute"
+func main{
+	str = "hello"
+	print "{str}"
+	test str
+	print "hello"
+}
+
+func test (l){
+	print "{l}"
+	g = l/3
+	print "{g}"
+
+	if g and l are equal {
+		print "equal {g} and {l}"
+	}
+	else {
+		print "not equal {g} and {l}"
+		g := "gijfi"
+		print "{g}"
+	}
+	print "{g}"
 }

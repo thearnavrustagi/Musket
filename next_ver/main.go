@@ -28,8 +28,8 @@ const (
 	SUGAR_DELIM = "|"
 
 	//syntax
-	FUNCTION_CALL string = "<<"
 	NORMAL_ASSIGNMENT string = "="
+	LEXICAL_VAR_SCOPE_ASIGNMENT string = ":= "
 	SYNTACTIC_ASSIGNMENT string = "<-"
 
 	RETURN_STATEMENT string = "return "
@@ -293,17 +293,13 @@ func StaticallyInitialize(program []string) {
 
 			program = deleteBlock(program,i,endIndex)
 		}
-		if declarable(program[i]) {
-			globalScope.declare(program[i],program,i,true)
+		if varSyntaxIsDeclarable(program[i]) {
+			endIndex := declareVarSyntax(program,i)
+			program = deleteBlock(program,i,endIndex)
 		}
 	}
-
-//	if buldFailure == true {
-//		fmt.Println("\u001B[91m"+BUILD_FAIL_ERR,"\u001B[0m")
-//	} else {
-		fmt.Println("\u001B[92mFIRST ASSIGNMENT RUN \nSTATUS: COMPLETE\u001B[0m\n")
-		StartExecution(program)
-//	}
+	fmt.Println("\u001B[92mFIRST ASSIGNMENT RUN \nSTATUS: COMPLETE\u001B[0m\n")
+	StartExecution(program)
 }
 
 func getNameAndParam(meth string) (string,string){
@@ -398,52 +394,20 @@ func getBlock(program []string,startIndex int,start rune,end rune) (Block,int){
 	}
 	return Block{snippet},endIndex
 }
-func declarable (line string) (bool) {
-	return strings.HasPrefix(line,VAR_DECALRATION)
+
+func varSyntaxIsDeclarable (args string) (bool){
+	return strings.Contains(args,SYNTACTIC_ASSIGNMENT)
 }
 
-func (caller ScopeNode)declare (line string,program []string,i int,check bool) {
-	if strings.HasPrefix(line,VAR_DECALRATION) {
-		parts := []rune(line)
-		name := string(parts[len(VAR_DECALRATION):])
+func declareVarSyntax (program []string,index int) (int){
+	name := strings.TrimSpace(strings.Split(program[index],SYNTACTIC_ASSIGNMENT)[0])
 
-		if strings.Contains(name,SYNTACTIC_ASSIGNMENT) {
-			temp := strings.Split(name,SYNTACTIC_ASSIGNMENT)
-			name = strings.TrimSpace(temp[0])
-			if testVarDeclaration(name) {
-				buldFailure = true
-			}
-			declareVarSyntax(name,program,i)
-			return
-		}
-
-		if strings.Contains(name,NORMAL_ASSIGNMENT) {
-			temp := strings.Split(name,NORMAL_ASSIGNMENT)
-			allVarNames := strings.Split(temp[0],",")
-			allValues := strings.Split(temp[1],",")
-
-			if (len(allVarNames) != len(allValues)) && (len(allValues) != 1){
-
-				fmt.Println("\u001B[91m"+INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
-				buldFailure = true
-			}
-			if len(allValues) == 1 {
-				caller.assignToAll(allVarNames,allValues[0])
-			} else {
-				caller.assignAll(allVarNames,allValues)
-			}
-		}
-	}
-}
-
-func declareVarSyntax(name string,program []string,index int) ([]string){	
-	block,endIndex := getBlock(program,index,'{','}')
-	varSyntaxSave[name] = VarSyntaxData{block}
+	dataBlock,endIndex := getBlock(program,index,'(',')')
+	vsData := VarSyntaxData{dataBlock}
+	varSyntaxSave[name] = vsData
 	varSyntaxNames = append(varSyntaxNames,name)
 
-	program = deleteBlock(program,index,endIndex)
-
-	return program
+	return endIndex
 }
 
 func StartExecution(program []string) {
@@ -549,36 +513,30 @@ func (data MethodData) runThrough (index int) {
 	data.scopeNode.owner = &data
 
 	for i := index; i < len(program); i++ {
+
 		data.scopeNode.presentLine = i
 		program[i] = strings.TrimSpace(program[i])
 
-		done,increment:= data.scopeNode.checkSpecialFunctions(program[i])
+		done,_:= data.scopeNode.checkSpecialFunctions(program[i])
 		if done {
-			i = i + increment
-			continue
-		}
-
-
-		if declarable(program[i]) {
-			data.scopeNode.declare(program[i],program,i,true)
+			//i = i + increment
 			continue
 		}
 		
-		if assignable(program[i]) {
-			if strings.Contains(program[i],NORMAL_ASSIGNMENT) {
-				data.scopeNode.assign(program,NORMAL_ASSIGNMENT,i)
-				continue
-			}
-
-			if strings.Contains(program[i],SYNTACTIC_ASSIGNMENT) {
-				data.scopeNode.assign(program,SYNTACTIC_ASSIGNMENT,i)
-				continue
-			}
+		if lexScopingIsBeingRequested(program[i]) {
+			data.scopeNode.lexScopingAssign(program[i])
+			continue
 		}
 
-		if scopeDeclaration(program[i]) {
-			i = data.scopeNode.declareScope(program,i)
+		if assignable(program[i]) {
+			data.scopeNode.assign(program[i])
 			continue
+		}
+
+
+		if varSyntaxIsDeclarable(program[i]) {
+			endIndex := declareVarSyntax(program,i)
+			program = deleteBlock(program,i,endIndex)
 		}
 
 		if strings.HasPrefix(program[i],"{") && strings.HasSuffix(program[i],"}") {
@@ -611,36 +569,63 @@ func (data MethodData) runThrough (index int) {
 
 
 func assignable(line string) (bool) {
-	return (strings.Contains(line,NORMAL_ASSIGNMENT) || strings.Contains(line,SYNTACTIC_ASSIGNMENT))
+	return strings.Contains(line,NORMAL_ASSIGNMENT)
 }
 
-func (caller ScopeNode) assign (program []string,assignmentType string,i int) {
-	line := program[i]
-	if assignmentType == SYNTACTIC_ASSIGNMENT {
-		temp := strings.Split(line,SYNTACTIC_ASSIGNMENT)
-		name := strings.TrimSpace(temp[0])
-		if testVarDeclaration(name) {
-			buldFailure = true
-		}
-
-		declareVarSyntax(name,program,i)
-		return
+func (caller ScopeNode) assign (args string) {
+	if strings.HasPrefix(args,VAR_DECALRATION) {
+		args = strings.TrimSpace(string([]rune(args)[len(VAR_DECALRATION):]))
+	} else {
+		args = strings.TrimSpace(args)
 	}
 
-	if assignmentType == NORMAL_ASSIGNMENT {
-		temp := strings.Split(line,NORMAL_ASSIGNMENT)
-		allVarNames := strings.Split(temp[0],",")
-		allValues := strings.Split(temp[1],",")
+	tempParts := strings.Split(args,NORMAL_ASSIGNMENT)
+	lhs := strings.Split(strings.TrimSpace(tempParts[0]),",")
+	rhs := strings.Split(strings.TrimSpace(tempParts[1]),",")
 
-		if (len(allVarNames) != len(allValues)) && (len(allValues) != 1){
-			fmt.Println("\u001B[91m"+INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
-		}
-		if len(allValues) == 1 {
-			caller.assignToAll(allVarNames,allValues[0])
+	caller.assignValues(lhs,rhs,false)
+}
+
+func lexScopingIsBeingRequested(line string) (bool) {
+	return strings.Contains(line,LEXICAL_VAR_SCOPE_ASIGNMENT)
+}
+
+func (caller ScopeNode) lexScopingAssign (args string) {
+	if strings.HasPrefix(args,LEXICAL_VAR_SCOPE_ASIGNMENT) {
+		args = strings.TrimSpace(string([]rune(args)[len(LEXICAL_VAR_SCOPE_ASIGNMENT):]))
+	} else {
+		args = strings.TrimSpace(args)
+	}
+
+	tempParts := strings.Split(args,LEXICAL_VAR_SCOPE_ASIGNMENT)
+	lhs := strings.Split(strings.TrimSpace(tempParts[0]),",")
+	rhs := strings.Split(strings.TrimSpace(tempParts[1]),",")
+
+	caller.assignValues(lhs,rhs,true)
+}
+
+func (caller ScopeNode) assignValues (names,values []string,lexScoping bool) {
+	for i := 0; i < len(values); i++ {
+		names[i] = strings.TrimSpace(names[i])
+		val := caller.compute(values[i])
+		if lexScoping {
+			caller.varSave[names[i]] = val
 		} else {
-			caller.assignAll(allVarNames,allValues)
+			caller.searchTheTreeAndPlace(names[i],val)
 		}
 	}
+}
+func (caller ScopeNode) searchTheTreeAndPlace (name string,value Data) {
+	presentNode := &caller
+	successFullNode := &caller
+	
+	for !reflect.DeepEqual(*presentNode,globalScope) {
+		if (presentNode.varSave[name] != Data{}) {
+			successFullNode = presentNode
+		}
+		presentNode = presentNode.parent
+	}
+	successFullNode.varSave[name] = value
 }
 
 func deleteBlock (program []string,startIndex int,endIndex int) ([]string){
@@ -649,34 +634,6 @@ func deleteBlock (program []string,startIndex int,endIndex int) ([]string){
 	}
 
 	return program
-}
-
-
-func (caller ScopeNode)assignToAll(varNames []string,value string) {
-	data := caller.compute(value)
-
-	for i := 0; i < len(varNames); i++ {
-		varNames[i] = strings.TrimSpace(varNames[i])
-		if strings.HasPrefix(varNames[i],VAR_DECALRATION) {
-			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
-		}
-
-		caller.varSave[varNames[i]] = data
-	}
-}
-func (caller ScopeNode) assignAll(varNames []string,varValues []string) {
-	for i := 0; i < len(varNames); i++ {
-		varNames[i] = strings.TrimSpace(varNames[i])
-		if strings.HasPrefix(varNames[i],VAR_DECALRATION) {
-			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
-		}
-		data := caller.compute(varValues[i])
-		caller.varSave[varNames[i]] = data
-	}
-}
-
-func testVarDeclaration(name string) bool{
-	return true
 }
 
 func functionCall(args string) (bool,string){
@@ -741,17 +698,6 @@ func removeSyntacticSugar(method string) string{
 	}
 
 	return returnString
-}
-
-func scopeDeclaration(code string) bool{
-	return strings.HasPrefix(code,SCOPE_DECLARATION)
-}
-
-func (caller ScopeNode) declareScope (program []string,index int) (int){
-	block,endIndex := getBlock(program,index,'{','}')
-	scope := MethodData{"",block,ScopeNode{&caller,make(map[string]Data),0,&MethodData{}},&MethodData{},0,""}
-	scope.runThrough(0)
-	return endIndex
 }
 
 func (caller ScopeNode) checkSpecialFunctions(line string) (bool,int){
@@ -895,7 +841,6 @@ func (caller ScopeNode) NOT (line string) {
 
 	boolCounterpart,_:=strconv.ParseBool(value)
 	boolVal :=  !boolCounterpart
-	fmt.Println(boolVal,boolCounterpart)
 	value = strconv.FormatBool(boolVal)
 
 	var data Data = encapsulate(value,' ').data
@@ -964,9 +909,8 @@ func (caller ScopeNode) tryIf (line string) {
 		if else_exists  {
 
 			elseBlock.runThrough(0)
-			temp := caller.owner.data.data
-			temp = deleteBlock(temp,caller.presentLine,ifEndIndex)
-			caller.owner.data.data = temp
+			caller.owner.runThrough(elseEndIndex)
+			os.Exit(0)
 		} else {
 			caller.owner.runThrough(ifEndIndex)
 			os.Exit(0)
