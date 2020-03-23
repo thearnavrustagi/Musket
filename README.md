@@ -144,14 +144,15 @@ Well the one which I just developed is called var syntax
   func main{
   	var a,b = 20,30
   	println "hello,world",num
-	var x = add a and b
-	var c = (choose a or b)
+  	var x = add a and b
+  	var c = choose a or b
   }
   func println(str,num){
   	print "{str}{num}"
   }
   func add (arg1,arg2){
-  	return (arg+var)
+  	ans = arg1+arg2
+  	return ans
   }
   func choose (arg1,arg2)(
   	if arg1>arg2 {
