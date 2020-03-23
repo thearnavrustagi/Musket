@@ -235,8 +235,55 @@ Well the one which I just developed is called var syntax
     now in this snippet if I write 
     ```
     {str}
-    ```
+    ``` 
     somewhere in the program later on it will become print "hello world" and the code will print hello world at that point if you print a system string then it will be printed in purple color
+- ### Operators
+  - #### +
+    this will add two doubles or numbers and apply implicit conversions if the operands are charges then it will apply the && boolean operator and if the operand is a string then it will concatinate both sides
+  - #### -
+    basic arithmatic subtraction for numbers and double if the two operands are charges then it will do a boolean and with a boolean not on the second operand and if the operands are strings then it will return the higher of the two strings based on ascii codes<br>eg:-
+    ```python
+    str = "hzzzzz"
+    joj = "aelloaaaa"
+    ans = str - joj
+    print "{ans}" # output will be hzzzzz
+    ```
+  - #### *
+    basic arithmatic multiplication for numbers and Doubles,boolean and for charges and a recursive concatination for strings<br>eg:-
+    ```python
+    str = "hell"
+    num = 3
+    args = "ooo"
+    ans1 = str*num
+    ans2 = str*args
+    print "answer1 is {ans1}"
+    print "answer2 is {ans2}"
+    # both will yield the same result "hellhellhell"
+    ```
+  - #### /
+    basic arithmatic division if operands are doubles and numbers, boolean and with a boolean not on the second operand if the operands are charges and substring if the operands are strings<br>eg:-
+  ```python
+  str = "hello"
+  num = 3
+  args = "arg"
+  ans1 = str/num
+  ans2 = str/args
+  print "answer1 is {ans1}"
+  print "answer2 is {ans2}"
+  # both will yield the result "he"
+  ```
+  - #### %
+    basic arithmatic modulus in numbers,this operand is not present in doubles and charges if the operands are strings then it will return a substring of the string <br>eg:-
+    ```python
+    str = "hello"
+    num = 3
+    args = "arg"
+    ans1 = str%num
+    ans2 = str%args
+    print "answer1 is {ans1}"
+    print "answer2 is {ans2}"
+    # both will yield the result "llo"
+    ```
 - ### Special Functions
   So to take input you have a simple line
   ```python
