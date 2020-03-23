@@ -110,7 +110,7 @@ Well the one which I just developed is called var syntax
   example
   ```python
   print "hello world"
-  printf "hello and "world"
+  printf "hello" and "world"
   func printf (name1,name2){
   	pure_print("{name1} {name2}")
   }
