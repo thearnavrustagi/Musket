@@ -45,6 +45,9 @@ const (
 	PURE_PRINT string = "pure_print "
 	INPUT string = "input "
 	NOT string = "not "
+	IF string = "if "
+	IF_ARGS_ARE_EQUAL string = "are equal"
+	ELSE string = "else "
 
 	//special constants
 	NULL = "null"
@@ -386,10 +389,8 @@ func getBlock(program []string,startIndex int,start rune,end rune) (Block,int){
 			break
 		}
 	}
-	if (startIndex > endIndex) {
-		fmt.Println("\u001B[91m"+METHOD_DECLARATION_ERR,"\u001B[0m\n","line:\t",startIndex+1)
-		buldFailure = true
-		return Block{},startIndex
+	if (startIndex == endIndex) {
+		return Block{},-1
 	}
 	snippet := make([]string,endIndex-startIndex)
 	for i := startIndex; i <endIndex; i++ {
@@ -546,13 +547,14 @@ func (data MethodData) runThroughFnc (index int,scpNode ScopeNode) {
 func (data MethodData) runThrough (index int) {
 	program := data.data.data
 	data.scopeNode.owner = &data
+
 	for i := index; i < len(program); i++ {
 		data.scopeNode.presentLine = i
-
 		program[i] = strings.TrimSpace(program[i])
 
-		done := data.scopeNode.checkSpecialFunctions(program[i])
+		done,increment:= data.scopeNode.checkSpecialFunctions(program[i])
 		if done {
+			i = i + increment
 			continue
 		}
 
@@ -752,25 +754,32 @@ func (caller ScopeNode) declareScope (program []string,index int) (int){
 	return endIndex
 }
 
-func (caller ScopeNode) checkSpecialFunctions(line string) (bool){
+func (caller ScopeNode) checkSpecialFunctions(line string) (bool,int){
 	if strings.HasPrefix(line,PRINTING) {
 		caller.print(line)
-		return true
+		return true,0
 	}
 
 	if strings.HasPrefix(line,PURE_PRINT) {
 		caller.pure_print(line)
-		return true
+		return true,0
 	}
 
 	if strings.HasPrefix(line,INPUT) {
 		caller.takeInput(line)
+		return true,0
 	}
 
 	if strings.HasPrefix(line,NOT) {
 		caller.NOT(line)
+		return true,0
 	}
-	return false
+
+	if strings.HasPrefix(line,IF) {
+		caller.tryIf(line)
+		return true,1
+	}
+	return false,0
 }
 
 func (caller ScopeNode) print(statement string) {
@@ -892,6 +901,100 @@ func (caller ScopeNode) NOT (line string) {
 	var data Data = encapsulate(value,' ').data
 
 	caller.varSave[name] = data
+}
+
+func (caller ScopeNode) tryIf (line string) {
+	ogLine := line
+
+	line = string([]rune(line)[len(IF):])
+	line = strings.TrimSpace(line)
+	if !strings.HasSuffix(line,"{") {
+		err("if block should always end with \"{\"")
+		os.Exit(0)
+	}
+	line = strings.TrimSpace(string([]rune(line)[:len(line)-1]))
+	line = removeParanthesisIfPresent(line)
+	if strings.HasSuffix(line,IF_ARGS_ARE_EQUAL) {
+		line = strings.TrimSpace(string([]rune(line)[:len(line)-len(IF_ARGS_ARE_EQUAL)]))
+		line = removeParanthesisIfPresent(line)
+		line = removeSyntacticSugar(line)
+		parts := strings.Split(line,",")
+
+
+		for i := 0; i < len(parts); i++ {
+			parts[i] = strings.TrimSpace(parts[i])
+			temp := caller.compute(parts[i])
+			parts[i] = temp.value
+		}
+		equal := true
+		for i := 0; i < len(parts)-1; i++ {
+			equal = equal && (parts[i] == parts[i+1])			
+		}
+		line = strconv.FormatBool(equal)
+	} else {
+		line = caller.compute(line).value
+	}
+
+	data := caller.owner.data.data
+	index := caller.presentLine
+
+	//declaring if block
+	if_dataBlock,ifEndIndex := getBlock(data,index,'{','}')
+
+	scpNode := ScopeNode{&caller,make(map[string]Data),0,&MethodData{}}
+	ifBlock := MethodData{"",if_dataBlock,scpNode,caller.owner,scpNode.presentLine,ogLine}
+
+	//declaring else block
+	else_dataBlock,elseEndIndex := getBlock(data,ifEndIndex+1,'{','}')
+	scpNode = ScopeNode{&caller,make(map[string]Data),0,&MethodData{}}
+	elseBlock := MethodData{"",else_dataBlock,scpNode,caller.owner,scpNode.presentLine+ifEndIndex,ogLine}
+
+	if line == "true" {
+		ifBlock.runThrough(1)
+		if elseEndIndex == -1 {
+			caller.owner.runThrough(ifEndIndex)
+			os.Exit(0)
+		} else {
+			fmt.Println(ifEndIndex,elseEndIndex)
+			caller.owner.runThrough(ifEndIndex)
+			os.Exit(0)
+		}
+	} else {
+		else_exists,_ := elseExists(data,index)
+		if else_exists  {
+
+			elseBlock.runThrough(0)
+			temp := caller.owner.data.data
+			temp = deleteBlock(temp,caller.presentLine,ifEndIndex)
+			caller.owner.data.data = temp
+		} else {
+			caller.owner.runThrough(elseEndIndex)
+			os.Exit(0)
+		}
+
+	}
+}
+
+func elseExists (program []string,index int) (bool,int){
+	for i := index; i<len(program); i++ {
+		if strings.HasPrefix(strings.TrimSpace(program[i]),ELSE) {
+			return true,i
+		}
+	}
+	return false,0
+}
+
+func  deleteElse (program []string,index int) {
+	_,endIndex := getBlock(program,index,'{','}')
+	deleteBlock(program,index,endIndex)
+}
+
+func removeParanthesisIfPresent (line string) (string) {
+	if strings.HasPrefix(line,"(")&&strings.HasSuffix(line,")") {
+		line = string([]rune(line)[1:len(line)-1])
+	}
+
+	return line
 }
 
 func (data MethodData) functionReturn(line string) {

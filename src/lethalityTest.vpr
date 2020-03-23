@@ -1,8 +1,7 @@
-charg = plus
-charg2 = minus
-ans = plus&minus
-ans2 = plus|minus
-ans3 = plus^minus
-not ans4,charg
-
-print "{ans} {ans2} {ans3} {ans4}"
+row = true
+col = true
+if row,col are equal {
+	print "hahahahah"
+	print "in if"
+	print "will execute"
+}
