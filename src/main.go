@@ -968,7 +968,7 @@ func (caller ScopeNode) tryIf (line string) {
 			temp = deleteBlock(temp,caller.presentLine,ifEndIndex)
 			caller.owner.data.data = temp
 		} else {
-			caller.owner.runThrough(elseEndIndex)
+			caller.owner.runThrough(ifEndIndex)
 			os.Exit(0)
 		}
 

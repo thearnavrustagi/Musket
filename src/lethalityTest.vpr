@@ -1,6 +1,7 @@
 row = true
 col = true
-if row,col are equal {
+mag = rue
+if row,col,mag are equal {
 	print "hahahahah"
 	print "in if"
 	print "will execute"
