@@ -170,7 +170,7 @@ Well the one which I just developed is called var syntax
 - ### Scoping
   Scoping is done by default in the program by that I basically mean that the values of one method don't go jumping in that of another method, you can also control it with scoping blocks an example is
   ```python
-  func main = (){
+  func main {
   	str = "hello"
 	
 	scope {
