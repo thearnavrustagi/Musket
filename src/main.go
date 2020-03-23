@@ -73,11 +73,16 @@ type MethodData struct {
 	parameters string
 	data Block
 	scopeNode ScopeNode
+	calledBy *MethodData
+	calledAt int
+	calledWith string
 }
 
 type ScopeNode struct {
 	parent *ScopeNode
 	varSave map[string]Data
+	presentLine int
+	owner *MethodData
 }
 
 type VarSyntaxData struct {
@@ -105,6 +110,7 @@ type NodePointer struct {
 }
 
 
+
 var varSyntaxSave map[string]VarSyntaxData
 var varSyntaxNames []string
 var methodSave map[string]*MethodData
@@ -112,9 +118,10 @@ var methodNames []string
 var globalScope ScopeNode
 //operators
 var operatorList []Operators
-
 var buldFailure bool
 
+//execution tree
+var executionListHeadNode *MethodData
 func main() {
 	argHandler := InititializeCMD()
 	//this function is HUGE and is at the end
@@ -124,7 +131,7 @@ func main() {
 	if args != "shell" {
 		methodSave = make(map[string]*MethodData)
 		varSyntaxSave = make(map[string]VarSyntaxData)
-		globalScope = ScopeNode{nil,make(map[string]Data)}
+		globalScope = ScopeNode{nil,make(map[string]Data),0,&MethodData{}}
 
 		
 		program := Interpret(args,argHandler)
@@ -135,7 +142,7 @@ func main() {
 		for true {
 			methodSave = make(map[string]*MethodData)
 			varSyntaxSave = make(map[string]VarSyntaxData)
-			globalScope = ScopeNode{nil,make(map[string]Data)}
+			globalScope = ScopeNode{nil,make(map[string]Data),0,&MethodData{}}
 			userInput := ""
 			reader := bufio.NewReader(os.Stdin)
 
@@ -339,7 +346,7 @@ func (caller ScopeNode)declareMethod (name string,parameters string,program []st
 
 	block,endIndex := getBlock(program,index,'{','}')
 
-	node := MethodData{param,block, ScopeNode{&caller,make(map[string]Data)}}
+	node := MethodData{param,block, ScopeNode{&caller,make(map[string]Data),0,&MethodData{}},&MethodData{},0,""}
 
 	methodSave[name] = &node
 
@@ -443,7 +450,7 @@ func StartExecution(program []string) {
 		data := methodSave[methodNames[i]].data.data
 		scopeNode := methodSave[methodNames[i]].scopeNode
 
-		methodSave[methodNames[i]] = &MethodData{param , Block{replaceSpecialSyntax(data)} , scopeNode }
+		methodSave[methodNames[i]] = &MethodData{param , Block{replaceSpecialSyntax(data)} , scopeNode , &MethodData{},0,""}
 
 		fmt.Println("\u001B[92mVAR SYNTAX REPLACEMENT IN METHOD [",methodNames[i],"] \nSTATUS: COMPLETE\u001B[0m\n")
 	}
@@ -505,21 +512,41 @@ func callFunctionMAIN() (string){
 	if methodSave["main"] == nil {
 		return MAIN_MISSING_ERR
 	}
-	data := MethodData{main.parameters,main.data,main.scopeNode}
+	data := MethodData{main.parameters,main.data,main.scopeNode,&MethodData{},0,""}
 	data.runThrough(0)
 	return ""
 }
 
 func autoCreateFunctionMAIN (program []string) {
-	main := MethodData{"",Block{program},ScopeNode{&globalScope,make(map[string]Data)}}
+	main := MethodData{"",Block{program},ScopeNode{&globalScope,make(map[string]Data),0,&MethodData{}},&MethodData{},0,""}
 	main.data.data = replaceSpecialSyntax(main.data.data)
 	methodSave["main"] = &main
 	callFunctionMAIN()
 }
 
+func (data MethodData) runThroughFnc (index int,scpNode ScopeNode) {
+	parts := strings.Split(strings.TrimSpace(data.data.data[0]),"=")
+	lhs := strings.Split(parts[0],",")
+	rhs := strings.Split(parts[1],",")
+
+	if len(lhs) != len(rhs){
+		err("insufficient parameters to call function")
+	}
+
+	for i := 0; i < len(lhs); i++ {
+		lhs[i],rhs[i] = strings.TrimSpace(lhs[i]),strings.TrimSpace(rhs[i])
+		var_data := scpNode.compute(rhs[i])
+		data.scopeNode.varSave[lhs[i]] = var_data
+	}
+
+	data.runThrough(1)
+}
+
 func (data MethodData) runThrough (index int) {
 	program := data.data.data
+	data.scopeNode.owner = &data
 	for i := index; i < len(program); i++ {
+		data.scopeNode.presentLine = i
 
 		program[i] = strings.TrimSpace(program[i])
 
@@ -555,7 +582,7 @@ func (data MethodData) runThrough (index int) {
 			str := string([]rune(program[i])[1:len(program[i])-1])
 			val,found := data.scopeNode.searchTreeFor(str)
 			value := val.value
-			if found{
+			if found {
 				program[i] = value
 				i = i-1
 				continue
@@ -565,13 +592,13 @@ func (data MethodData) runThrough (index int) {
 		funcCall,methodName := functionCall(program[i])
 
 		if  funcCall {
-			callFunction(program[i],methodName)
+			data.scopeNode.callFunction(program[i],methodName,data,i)
 			continue
 		}
 
 		
 		if strings.HasPrefix(program[i],RETURN_STATEMENT) {
-			functionReturn(program[i])
+			data.functionReturn(program[i])
 			continue
 		}
 	}
@@ -603,7 +630,7 @@ func (caller ScopeNode) assign (program []string,assignmentType string,i int) {
 		allValues := strings.Split(temp[1],",")
 
 		if (len(allVarNames) != len(allValues)) && (len(allValues) != 1){
-			//mt.Println("\u001B[91m"+INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
+			fmt.Println("\u001B[91m"+INSUFFICIENT_VARS_ERR,"\u001B[0m\n","line:\t",i+1)
 		}
 		if len(allValues) == 1 {
 			caller.assignToAll(allVarNames,allValues[0])
@@ -630,7 +657,6 @@ func (caller ScopeNode)assignToAll(varNames []string,value string) {
 		if strings.HasPrefix(varNames[i],VAR_DECALRATION) {
 			varNames[i] = string([]rune(varNames[i])[len(varNames[i]):])
 		}
-		//fmt.Println("name:",varNames[i])
 
 		caller.varSave[varNames[i]] = data
 	}
@@ -659,14 +685,19 @@ func functionCall(args string) (bool,string){
 	return false,""
 }
 
-func callFunction (method string,name string) {
+func (caller ScopeNode)callFunction (method string,name string,calledBy MethodData,callingAt int) {
+	methodSave[name].calledAt = callingAt
+	methodSave[name].calledBy = &calledBy
+	methodSave[name].calledWith = method
+
 	method = removeSyntacticSugar(strings.TrimSpace(method))
 	param := string([]rune(method)[len(name)+1:])
 
-	assignmentSting := methodSave[name].parameters+" = "+param
-	methodSave[name].data.data[0] = assignmentSting
+	assignmentString := methodSave[name].parameters+" = "+param
 
-	methodSave[name].runThrough(0)
+
+	methodSave[name].data.data[0] = assignmentString
+	methodSave[name].runThroughFnc(0,caller)
 }
 
 func removeSyntacticSugar(method string) string{
@@ -715,7 +746,7 @@ func scopeDeclaration(code string) bool{
 
 func (caller ScopeNode) declareScope (program []string,index int) (int){
 	block,endIndex := getBlock(program,index,'{','}')
-	scope := MethodData{"",block,ScopeNode{&caller,make(map[string]Data)}}
+	scope := MethodData{"",block,ScopeNode{&caller,make(map[string]Data),0,&MethodData{}},&MethodData{},0,""}
 	scope.runThrough(0)
 	return endIndex
 }
@@ -786,15 +817,6 @@ func (caller ScopeNode) replaceVars (statement string) (string){
 	return statement
 }
 
-func isString (args string) (bool) {
-	return strings.HasPrefix(args,"\"") && strings.HasSuffix(args,"\"")
-}
-
-func removeQuotes (args string) (string) {
-	elems := []rune(args)
-	return string(elems[1:len(elems)-1])
-}
-
 func (caller ScopeNode)searchTreeFor(name string) (Data,bool){
 	found := false
 	itrnext := true
@@ -842,8 +864,32 @@ func (caller ScopeNode) takeInput (line string) {
 	caller.varSave[parts[0]] = Data{nstr,STRING,str}
 }
 
-func functionReturn(line string) {
+func (data MethodData) functionReturn(line string) {
+	caller := data.scopeNode.owner.scopeNode
 
+	returnable := string([]rune(line)[len(RETURN_STATEMENT):])
+	returnable = strings.TrimSpace(returnable)
+	dataNode,found := caller.searchTreeFor(returnable)
+	var returnData Data
+	
+	returnData = encapsulate(returnable,' ').data
+
+	if found {
+		returnData = dataNode 
+	}
+
+	data.replaceFunctionCallForValue(returnData)
+}
+
+func (data MethodData) replaceFunctionCallForValue (returnData Data) {
+	caller := data.calledBy
+	lines := caller.data.data
+	index := data.calledAt
+	line := lines[index]
+	value := returnData.value
+	line = strings.Replace(line,data.calledWith,value,-1)
+	data.calledBy.data.data[index] = line
+	caller.runThrough(index)
 }
 
 func decipherType (args string) (string) {
@@ -898,13 +944,14 @@ func createStringRep (line string,TYPE string) (string){
 
 func (caller ScopeNode) compute(value string) (Data) {
 	value = strings.TrimSpace(value)
-	if hasNoOperators(value) {		
+	if hasNoOperators(value) {
+		temp,found := caller.searchTreeFor(value)
+		if found {
+			value = temp.value
+		}
+		
 		Type := decipherType(strings.TrimSpace(value))
 		valueD := value
-
-		if Type == STRING {
-			valueD = "\""+value+"\""
-		}
 		
 		return Data{value,Type,createStringRep(valueD,Type)}
 	}
@@ -913,12 +960,6 @@ func (caller ScopeNode) compute(value string) (Data) {
 
 	Type := decipherType(strings.TrimSpace(value))
 	valueD := value
-
-	/*
-	if Type == STRING {
-		valueD = "\""+value+"\""
-	}
-	*/
 	
 	return Data{value,Type,createStringRep(valueD,Type)}
 }
@@ -944,6 +985,7 @@ func (caller ScopeNode) applyOperators(line string) (string){
 	for i := 0; i < len(operatorList); i++ {
 		for j:=0;j<len(elems);j++ {
 			if elems[j] == operatorList[i].rep {
+
 				splitPoints = append(splitPoints,j)
 				mapp[j] = operatorList[i].rep
 			}
@@ -962,6 +1004,11 @@ func (caller ScopeNode) applyOperators(line string) (string){
 			str := val.value + string(mapp[splitPoints[i+1]])
 			parts = append(parts,str)
 		} else {
+			isAFunction,name := checkIfAFunction(repr)
+			if isAFunction {
+				caller.callFunction(repr,name,*caller.owner,caller.presentLine)
+				os.Exit(0)
+			}
 			str := repr + string(mapp[splitPoints[i+1]])
 			parts = append(parts,str)
 		}
@@ -975,6 +1022,10 @@ func (caller ScopeNode) applyOperators(line string) (string){
 
 	answer := headPointer.calculate()
 	return answer
+}
+
+func checkIfAFunction (args string) (bool,string){
+	return functionCall(args)
 }
 
 func (caller *DataNode) iterateAndAdd (element string,symbol rune) {
@@ -1053,8 +1104,7 @@ func InititializeOperators() {
 			
 			} else {
 			
-				return arg1.value+arg2.value,true
-			
+				return ("\""+arg1.value+arg2.value+"\""),true			
 			}
 		
 		} else if arg1.Type == DOUBLE {
@@ -1078,8 +1128,7 @@ func InititializeOperators() {
 				os.Exit(0)
 			
 			} else {
-			
-				return arg1.value+arg2.value,true
+				return ("\""+arg1.value+arg2.value+"\""),true
 			
 			}
 		
@@ -1114,14 +1163,12 @@ func InititializeOperators() {
 				return strconv.FormatBool(val1&&val2),true
 		
 			} else {
-		
-				return arg1.value+arg2.value,true
-		
+				return ("\""+arg1.value+arg2.value+"\""),true		
 			}
 		
 		} else {
 		
-			return arg1.value+arg2.value,true
+			return ("\""+arg1.value+arg2.value+"\""),true
 		
 		}
 		
@@ -1160,10 +1207,10 @@ func InititializeOperators() {
 				}
 				if sum2>sum1 {
 					ans := arg2.value 
-					return ans,true
+					return "\""+ans+"\"",true
 				} else {
 					ans := arg1.value
-					return ans,true
+					return "\""+ans+"\"",true
 				}
 			
 				return arg1.value+arg2.value,true
@@ -1200,10 +1247,10 @@ func InititializeOperators() {
 				}
 				if sum2>sum1 {
 					ans := arg2.value 
-					return ans,true
+					return "\""+ans+"\"",true
 				} else {
 					ans := arg1.value
-					return ans,true
+					return "\""+ans+"\"",true
 				}
 			
 				return arg1.value+arg2.value,true
@@ -1251,10 +1298,10 @@ func InititializeOperators() {
 				}
 				if sum2>sum1 {
 					ans := arg2.value 
-					return ans,true
+					return "\""+ans+"\"",true
 				} else {
 					ans := arg1.value
-					return ans,true
+					return "\""+ans+"\"",true
 				}
 			
 				return arg1.value+arg2.value,true
@@ -1272,13 +1319,13 @@ func InititializeOperators() {
 			}
 			if sum2>sum1 {
 				ans := arg2.value 
-				return ans,true
+				return "\""+ans+"\"",true
 			} else {
 				ans := arg1.value
-				return ans,true
+				return "\""+ans+"\"",true
 			}
 			
-			return arg1.value+arg2.value,true
+			return NULL,true
 		}
 		
 		return NULL,true
