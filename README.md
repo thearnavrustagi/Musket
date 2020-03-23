@@ -28,6 +28,7 @@ func add (a,b){
 	return a+b
 }
  ```
+ java like counterpart
  ```java
  ___________JAVA____________
  public static void main() {
