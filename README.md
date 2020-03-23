@@ -58,7 +58,7 @@ func add (a,b){
    - [ ] while/for                      
 - [ ] OPERATORS<br>
   - [x] arithmatic                    
-  - [ ] boolean/logical                       
+  - [x] boolean/logical                       
   - [ ] relational                    
   - [ ] bitwise                       
 - [ ] PROGRAMMING FEATURES<br>
@@ -216,8 +216,7 @@ Well the one which I just developed is called var syntax
     ```
   - ##### Charge
     this is an alias for boolean it can have values such as
-    - true | false
-    - plus | minus<br>
+    - true | false<br>
     declaration
     ```
     bool = true
@@ -243,7 +242,17 @@ Well the one which I just developed is called var syntax
   - #### +
     this will add two doubles or numbers and apply implicit conversions if the operands are charges then it will apply the && boolean operator and if the operand is a string then it will concatinate both sides
   - #### -
-    basic arithmatic subtraction for numbers and double if the two operands are charges then it will do a boolean and with a boolean not on the second operand and if the operands are strings then it will return the higher of the two strings based on ascii codes<br>eg:-
+    basic arithmatic subtraction for numbers and double if the two operands are charges then it will do a boolean and with a boolean not on the second operand and if the operands are strings then it will return the higher of the two strings based on ascii codes<br>eg:-<br>
+    charges
+    ```python
+    bool1 = true
+    bool2 = false
+    bool3 = bool1 - bool2 # true
+    bool3 = bool2 - bool2 # false
+    bool3 = bool2 - bool2 # false
+    bool3 = bool1 - bool1 # false
+    ```
+    strings
     ```python
     str = "hzzzzz"
     joj = "aelloaaaa"
@@ -285,6 +294,25 @@ Well the one which I just developed is called var syntax
     print "answer1 is {ans1}"
     print "answer2 is {ans2}"
     # both will yield the result "llo"
+    ```
+  - #### &
+    boolean/logical "and" works the same way as python's "and" or java's "&&"
+  - #### |
+    boolean/logical "or" works the same way as python's "or" or java's "||"
+  - #### ^
+    boolean/logical "xor" works the same way as java's "^"
+  - #### not
+    boolean logical "not" works the same way as python's "not" and java's "!" but has a different declaration
+    <br>declaration:-
+    ```python
+    not [var_name] [boolean value]
+    ```
+    example:-
+    ```python
+    bool1 = true
+    bool2 = false
+    not bool3,bool2  # bool3 will hold the value true
+    not bool3,bool1  # bool3 will hold the value false
     ```
 - ### Special Functions
   So to take input you have a simple line
