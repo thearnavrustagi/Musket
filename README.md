@@ -55,7 +55,7 @@ func add (a,b){
    - [X] printing                      
    - [x] user input                    
    - [ ] type variables                
-   - [ ] if/else                       
+   - [x] if/else                       
    - [ ] while/for                      
 - [ ] OPERATIONS<br>
   - [x] arithmatic                    
@@ -317,13 +317,63 @@ Well the one which I just developed is called var syntax
     not bool3,bool1  # bool3 will hold the value false
     ```
 - ### Special Functions
-  So to take input you have a simple line
+  #### if else<br>
+  so the structure is very simple like so<br>
+  ```python
+  if [boolean args] {
+  	[body]
+  }
+  else {
+  	[body]
+  }
+  ```
+  plese note that the else block **CAN NEVER** be after the curly braces that is like this
+  ```python
+  if [boolean args] {
+  	[body]
+  } else {
+  	[body]
+  }
+  ```
+  this is not allowed and will mess the code up<br>now all boolean operators work as if's arguments but please not that there are some differences in this language then your traditional languages that is the equals to, how so? I shall demonstrate this<br>this is viper code
+  ```python
+  args1,args2 = "hello"
+  if args1,args2 are equal {
+  	[body]
+  }
+  ```
+  this here is synonymous go code
+  ```go
+  args1,args2 := "hello","hello"
+  if args1 == args2 {
+  	[body]
+  }
+  ```
+  as you can see the "==" is replaced with the suffixed function call " are equal" this creates the code more verbose and this will work in every situation, you can call the " are equal" function on as many operands as you want like this
+  ```python
+  args1,args2,args3,args4 = 20
+  if args1,args2,args3,args4 are equal {
+  	[body]
+  }
+  ```
+  This is eligible code and will infact execute
+  <br>As " are equal" is a method you can use syntactic sugar to make the code even more verbose like this
+  ```python
+  args1,args2,args3,args4 = 20
+  if args1 and args2 and args3 and args4 are equal {
+  	[body]
+  }
+  ```
+  is eligible code
+  <br>#### Input
+  To take input from the user you have a simple line
   ```python
   input [var],[line to print in double quotes]
   ```
   so just like in python the line will be printed and you have to write your option in it and it will get stored in the variable "var" which you can use later
   <br><br>
-  Now there are two types of print statements print and pure_print<br>
+  #### printin
+  There are two types of print statements print and pure_print<br>
   ```python
   print[args in double quotes]
   and
