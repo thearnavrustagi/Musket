@@ -44,6 +44,7 @@ const (
 	PRINTING string = "print "
 	PURE_PRINT string = "pure_print "
 	INPUT string = "input "
+	NOT string = "not "
 
 	//special constants
 	NULL = "null"
@@ -765,6 +766,10 @@ func (caller ScopeNode) checkSpecialFunctions(line string) (bool){
 	if strings.HasPrefix(line,INPUT) {
 		caller.takeInput(line)
 	}
+
+	if strings.HasPrefix(line,NOT) {
+		caller.NOT(line)
+	}
 	return false
 }
 
@@ -862,6 +867,31 @@ func (caller ScopeNode) takeInput (line string) {
 	nstr := "\""+str+"\""
 
 	caller.varSave[parts[0]] = Data{nstr,STRING,str}
+}
+
+func (caller ScopeNode) NOT (line string) {
+	line = strings.TrimSpace(line)
+	line = string([]rune(line)[len(NOT):])
+	parts := strings.Split(line,",")
+
+	name := strings.TrimSpace(parts[0])
+	value := strings.TrimSpace(parts[1])
+
+	val,found := caller.searchTreeFor(value)
+
+	if found {
+		value = val.value
+	}
+	fmt.Println("|"+value+"|")
+
+	boolCounterpart,_:=strconv.ParseBool(value)
+	boolVal :=  !boolCounterpart
+	fmt.Println(boolVal,boolCounterpart)
+	value = strconv.FormatBool(boolVal)
+
+	var data Data = encapsulate(value,' ').data
+
+	caller.varSave[name] = data
 }
 
 func (data MethodData) functionReturn(line string) {
@@ -1743,6 +1773,94 @@ func InititializeOperators() {
 		return NULL,true
 	}}
 
+	AND := Operators{'&',
+	func (arg1,arg2 Data) (string,bool) {
+		if arg1.Type == BOOLEAN {
+			if arg2.Type == BOOLEAN {
+				var1,var2 := arg1.value,arg2.value
+				if var1 == "plus" {
+					var1 = "true"
+				} else if var1 == "minus" {
+					var1 = "false"
+				}
 
+				if var2 == "plus" {
+					var2 = "true"
+				} else if var2 == "minus" {
+					var2 = "false"
+				}
+		
+				val1,_ := strconv.ParseBool(var1)
+				val2,_ := strconv.ParseBool(var2)
+				return strconv.FormatBool(val1&&val2),true
+			} else {
+				err("the boolean \"and\" operator can only be used with boolean operands")
+			}
+		} else {
+			err("the boolean \"and\" operator can only be used with boolean operands")
+		}
+		return NULL,true
+	}}
+
+	OR := Operators {'|',
+	func (arg1,arg2 Data) (string,bool) {	
+		if arg1.Type == BOOLEAN {
+			if arg2.Type == BOOLEAN {
+				var1,var2 := arg1.value,arg2.value
+				if var1 == "plus" {
+					var1 = "true"
+				} else if var1 == "minus" {
+					var1 = "false"
+				}
+
+				if var2 == "plus" {
+					var2 = "true"
+				} else if var2 == "minus" {
+					var2 = "false"
+				}
+		
+				val1,_ := strconv.ParseBool(var1)
+				val2,_ := strconv.ParseBool(var2)
+				return strconv.FormatBool(val1||val2),true
+			} else {
+				err("the boolean \"or\" operator can only be used with boolean operands")
+			}
+		} else {
+			err("the boolean \"or\" operator can only be used with boolean operands")
+		}
+		return NULL,true
+	}}
+
+	XOR := Operators {'^',
+	func (arg1,arg2 Data) (string,bool) {	
+		if arg1.Type == BOOLEAN {
+			if arg2.Type == BOOLEAN {
+				var1,var2 := arg1.value,arg2.value
+				if var1 == "plus" {
+					var1 = "true"
+				} else if var1 == "minus" {
+					var1 = "false"
+				}
+
+				if var2 == "plus" {
+					var2 = "true"
+				} else if var2 == "minus" {
+					var2 = "false"
+				}
+		
+				val1,_ := strconv.ParseBool(var1)
+				val2,_ := strconv.ParseBool(var2)
+				return strconv.FormatBool((val1 || val2) && !(val1 && val2)),true
+			} else {
+				err("the boolean \"xor\" operator can only be used with boolean operands")
+			}
+		} else {
+			err("the boolean \"xor\" operator can only be used with boolean operands")
+		}
+		return NULL,true
+	}}
+
+	// (X || Y) && !(X && Y)
 	operatorList = append(operatorList,PLUS,MINUS,MULT,DIVIDE,MOD)
+	operatorList = append(operatorList,AND,OR,XOR)
 }

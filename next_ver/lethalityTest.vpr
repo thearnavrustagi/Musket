@@ -1,11 +1,8 @@
-string1 = "helo"
-string2 = "bye"
-opt = string1
-print "{string1} {string2} {opt}"
-hello = test opt+20
-print "{hello}"
+charg = plus
+charg2 = minus
+ans = plus&minus
+ans2 = plus|minus
+ans3 = plus^minus
+not ans4,charg
 
-func test(hello){
-	print "{hello}"
-	return hello
-}
+print "{ans} {ans2} {ans3} {ans4}"
