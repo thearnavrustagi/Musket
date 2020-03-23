@@ -15,10 +15,10 @@ print "okay a is {a}|{b}|{c}|{x}"
 var x = subtract a,b
 var y = add a and b
 
-var something <- {
+var something <- (
 	print "hello"
 	var = {yulo}
-}
+)
 
 func subtract (a,b){
 	return a-b
@@ -76,9 +76,9 @@ Well the one which I just developed is called var syntax
 - ### VAR_SYNTAX<br>
   well this is basically that you assign a variable like this
   ```python
-  var [var_name] <- {
+  var [var_name] <- (
   	# body
-  }
+  )
   ```
   and this should be outside a method<br>
   to call this you just have to write its name in the main method like so
@@ -91,9 +91,9 @@ Well the one which I just developed is called var syntax
   add
   print "the sum of a and b is {c}"
   
-  var add <- {
+  var add <- (
   	var c = a + b 
-  }
+  )
   ```
   yes this is eligible syntax but will not work right now well because I have not handled the calculation part (yes the language is even more useless then before but well calculation implementations are easy and redundant)
 - ### Automatic main Creation
