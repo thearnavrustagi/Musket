@@ -111,13 +111,13 @@ var methodSave map[string]*MethodData
 var methodNames []string
 var globalScope ScopeNode
 //operators
-var operators map[string]Operators
-var oprList []Operators
+var operatorList []Operators
 
 var buldFailure bool
 
 func main() {
 	argHandler := InititializeCMD()
+	//this function is HUGE and is at the end
 	InititializeOperators()
 	args := getUserArgs()
 	
@@ -150,10 +150,6 @@ func main() {
 			nullifyData()
 		}
 	}
-}
-
-func PrintBug(str string) {
-	fmt.Println(str)
 }
 
 func nullifyData() {
@@ -201,126 +197,11 @@ func InititializeCMD() [3]CmdArgs{
 	return argHandler
 }
 
-/*
-for personal reference
-
-PLUS
-MINUS
-MULT
-DIVIDE
-PERCENT
-COMMA
-*/
-
-func InititializeOperators() {
-	operators = make(map[string]Operators)
-	/*pass := Operators{' ',
-	func(arg1,arg2 Data) (string,bool){
-		fmt.Println(arg1,"<arg1\targ2>",arg2)
-		return arg1.value,true
-	}}*/
-
-	PLUS := Operators{'+',
-	func(arg1 Data,arg2 Data)(string,bool){
-		if arg1.Type == NUMBER {
-
-			if arg2.Type == NUMBER {
-				
-				num1,_ := strconv.Atoi(arg1.value)
-				num2,_ := strconv.Atoi(arg2.value)
-				return strconv.Itoa((num1+num2)),true
-			
-			} else if arg2.Type == DOUBLE {
-				
-				dec := arg1.value+".0"
-				dec1,_ := strconv.ParseFloat(dec,64)
-				dec2,_ := strconv.ParseFloat(arg2.value,64)
-				return strconv.FormatFloat(dec1+dec2,'f',-1,64),true
-			
-			} else if arg2.Type == BOOLEAN {
-				fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
-				os.Exit(0)
-			
-			} else {
-			
-				return arg1.value+arg2.value,true
-			
-			}
-		
-		} else if arg1.Type == DOUBLE {
-			
-			if arg2.Type == DOUBLE {
-			
-				num1,_ := strconv.ParseFloat(arg1.value,64)
-				num2,_ := strconv.ParseFloat(arg2.value,64)
-				return strconv.FormatFloat(num1+num2,'f',-1,64),true
-			
-			} else if arg2.Type == NUMBER {
-			
-				dec := arg2.value+".0"
-				dec1,_ := strconv.ParseFloat(arg1.value,64)
-				dec2,_ := strconv.ParseFloat(dec,64)
-				return strconv.FormatFloat(dec1+dec2,'f',-1,64),true
-			
-			} else if arg2.Type == BOOLEAN {
-			
-				fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
-				os.Exit(0)
-			
-			} else {
-			
-				return arg1.value+arg2.value,true
-			
-			}
-		
-		} else if arg1.Type == BOOLEAN {
-
-			if arg2.Type == NUMBER {
-		
-				fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
-				os.Exit(0)
-		
-			} else if arg2.Type == DOUBLE {
-		
-				fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
-				os.Exit(0)
-		
-			} else if arg2.Type == BOOLEAN {
-				var1,var2 := arg1.value,arg2.value
-				if var1 == "plus" {
-					var1 = "true"
-				} else if var1 == "minus" {
-					var1 = "false"
-				}
-
-				if var2 == "plus" {
-					var2 = "true"
-				} else if var2 == "minus" {
-					var2 = "false"
-				}
-		
-				val1,_ := strconv.ParseBool(var1)
-				val2,_ := strconv.ParseBool(var2)
-				return strconv.FormatBool(val1&&val2),true
-		
-			} else {
-		
-				return arg1.value+arg2.value,true
-		
-			}
-		
-		} else {
-		
-			return arg1.value+arg2.value,true
-		
-		}
-		
-		return NULL,true
-	}}
-	operators[string(PLUS.rep)] = PLUS
-
-	oprList = append(oprList,PLUS)
+func err(args string) {
+	fmt.Println("\u001B[91m"+args+"\u001B[0m")
 }
+
+
 
 func getUserArgs() string{
 	if len(os.Args) == 1 {
@@ -905,6 +786,15 @@ func (caller ScopeNode) replaceVars (statement string) (string){
 	return statement
 }
 
+func isString (args string) (bool) {
+	return strings.HasPrefix(args,"\"") && strings.HasSuffix(args,"\"")
+}
+
+func removeQuotes (args string) (string) {
+	elems := []rune(args)
+	return string(elems[1:len(elems)-1])
+}
+
 func (caller ScopeNode)searchTreeFor(name string) (Data,bool){
 	found := false
 	itrnext := true
@@ -1008,8 +898,7 @@ func createStringRep (line string,TYPE string) (string){
 
 func (caller ScopeNode) compute(value string) (Data) {
 	value = strings.TrimSpace(value)
-	if hasNoOperators(value) {
-		fmt.Println("no operators")		
+	if hasNoOperators(value) {		
 		Type := decipherType(strings.TrimSpace(value))
 		valueD := value
 
@@ -1025,21 +914,23 @@ func (caller ScopeNode) compute(value string) (Data) {
 	Type := decipherType(strings.TrimSpace(value))
 	valueD := value
 
+	/*
 	if Type == STRING {
 		valueD = "\""+value+"\""
 	}
+	*/
 	
 	return Data{value,Type,createStringRep(valueD,Type)}
 }
 
 func hasNoOperators(args string) (bool){
-	ret := true
+	returnable := true
 
-	for i := 0; i < len(oprList); i++ {
-		ret = ret && !strings.Contains(args,string(oprList[i].rep))
+	for i := 0; i < len(operatorList); i++ {
+		returnable = returnable && !strings.Contains(args,string(operatorList[i].rep))
 	}
 
-	return ret
+	return returnable
 }
 
 func (caller ScopeNode) applyOperators(line string) (string){
@@ -1050,11 +941,11 @@ func (caller ScopeNode) applyOperators(line string) (string){
 	headPointer := &DataNode{Data{},NodePointer{&DataNode{Data{},NodePointer{},false},' '},true}
 
 	splitPoints = append(splitPoints,0)
-	for i := 0; i < len(oprList); i++ {
+	for i := 0; i < len(operatorList); i++ {
 		for j:=0;j<len(elems);j++ {
-			if elems[j] == oprList[i].rep {
+			if elems[j] == operatorList[i].rep {
 				splitPoints = append(splitPoints,j)
-				mapp[j] = oprList[i].rep
+				mapp[j] = operatorList[i].rep
 			}
 		}
 	}
@@ -1066,11 +957,8 @@ func (caller ScopeNode) applyOperators(line string) (string){
 	for i := 0; i < len(splitPoints)-1; i++ {
 		repr :=strings.TrimSpace(string(elems[splitPoints[i]+1:splitPoints[i+1]]))
 		val,found := caller.searchTreeFor(repr)
-		
-		fmt.Println("trying","|"+repr+"|")
 
 		if found {
-			fmt.Println("found ",repr,val)
 			str := val.value + string(mapp[splitPoints[i+1]])
 			parts = append(parts,str)
 		} else {
@@ -1078,8 +966,6 @@ func (caller ScopeNode) applyOperators(line string) (string){
 			parts = append(parts,str)
 		}
 	}
-
-	fmt.Println(parts)
 
 	for i := 0; i < len(parts); i++ {
 		symbol := []rune(parts[i])[len(parts[i])-1]
@@ -1125,9 +1011,9 @@ func (caller *DataNode) calculate () (string){
 		child := *(*caller).pointer.parent
 		parent := (*(*(*caller).pointer.parent).pointer.parent)
 
-		for i := 0; i < len(oprList); i++ {
-			if oprList[i].rep == child.pointer.action {
-				result,_ = oprList[i].action(child.data,parent.data)
+		for i := 0; i < len(operatorList); i++ {
+			if operatorList[i].rep == child.pointer.action {
+				result,_ = operatorList[i].action(child.data,parent.data)
 				break
 			}
 		}
@@ -1139,6 +1025,677 @@ func (caller *DataNode) calculate () (string){
 
 		(*caller).pointer.parent = &dataNode
 	}
-	fmt.Println(result)
 	return result
+}
+
+//operators
+func InititializeOperators() {
+	PLUS := Operators{'+',
+	func(arg1 Data,arg2 Data)(string,bool){
+		if arg1.Type == NUMBER {
+
+			if arg2.Type == NUMBER {
+				
+				num1,_ := strconv.Atoi(arg1.value)
+				num2,_ := strconv.Atoi(arg2.value)
+				return strconv.Itoa((num1+num2)),true
+			
+			} else if arg2.Type == DOUBLE {
+				
+				dec := arg1.value+".0"
+				dec1,_ := strconv.ParseFloat(dec,64)
+				dec2,_ := strconv.ParseFloat(arg2.value,64)
+				return strconv.FormatFloat(dec1+dec2,'f',-1,64),true
+			
+			} else if arg2.Type == BOOLEAN {
+				fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
+				os.Exit(0)
+			
+			} else {
+			
+				return arg1.value+arg2.value,true
+			
+			}
+		
+		} else if arg1.Type == DOUBLE {
+			
+			if arg2.Type == DOUBLE {
+			
+				num1,_ := strconv.ParseFloat(arg1.value,64)
+				num2,_ := strconv.ParseFloat(arg2.value,64)
+				return strconv.FormatFloat(num1+num2,'f',-1,64),true
+			
+			} else if arg2.Type == NUMBER {
+			
+				dec := arg2.value+".0"
+				dec1,_ := strconv.ParseFloat(arg1.value,64)
+				dec2,_ := strconv.ParseFloat(dec,64)
+				return strconv.FormatFloat(dec1+dec2,'f',-1,64),true
+			
+			} else if arg2.Type == BOOLEAN {
+			
+				fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
+				os.Exit(0)
+			
+			} else {
+			
+				return arg1.value+arg2.value,true
+			
+			}
+		
+		} else if arg1.Type == BOOLEAN {
+
+			if arg2.Type == NUMBER {
+		
+				fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
+				os.Exit(0)
+		
+			} else if arg2.Type == DOUBLE {
+		
+				fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
+				os.Exit(0)
+		
+			} else if arg2.Type == BOOLEAN {
+				var1,var2 := arg1.value,arg2.value
+				if var1 == "plus" {
+					var1 = "true"
+				} else if var1 == "minus" {
+					var1 = "false"
+				}
+
+				if var2 == "plus" {
+					var2 = "true"
+				} else if var2 == "minus" {
+					var2 = "false"
+				}
+		
+				val1,_ := strconv.ParseBool(var1)
+				val2,_ := strconv.ParseBool(var2)
+				return strconv.FormatBool(val1&&val2),true
+		
+			} else {
+		
+				return arg1.value+arg2.value,true
+		
+			}
+		
+		} else {
+		
+			return arg1.value+arg2.value,true
+		
+		}
+		
+		return NULL,true
+	}}
+
+	MINUS := Operators{'-',
+	func(arg1 Data,arg2 Data)(string,bool){
+		if arg1.Type == NUMBER {
+
+			if arg2.Type == NUMBER {
+				
+				num1,_ := strconv.Atoi(arg1.value)
+				num2,_ := strconv.Atoi(arg2.value)
+				return strconv.Itoa((num1-num2)),true
+			
+			} else if arg2.Type == DOUBLE {
+				
+				dec := arg1.value+".0"
+				dec1,_ := strconv.ParseFloat(dec,64)
+				dec2,_ := strconv.ParseFloat(arg2.value,64)
+				return strconv.FormatFloat(dec1-dec2,'f',-1,64),true
+			
+			} else if arg2.Type == BOOLEAN {
+				fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
+				os.Exit(0)
+			
+			} else {
+				r1,r2 := []rune(arg1.value),[]rune(arg2.value)
+				sum1,sum2 :=0,0
+				for i := 0; i < len(r1); i++ {
+					sum1 = sum1 + int(r1[i])
+				}
+				for i := 0; i < len(r2); i++ {
+					sum2 = sum2 + int(r2[i])
+				}
+				if sum2>sum1 {
+					ans := arg2.value 
+					return ans,true
+				} else {
+					ans := arg1.value
+					return ans,true
+				}
+			
+				return arg1.value+arg2.value,true
+			}
+		
+		} else if arg1.Type == DOUBLE {
+			
+			if arg2.Type == DOUBLE {
+			
+				num1,_ := strconv.ParseFloat(arg1.value,64)
+				num2,_ := strconv.ParseFloat(arg2.value,64)
+				return strconv.FormatFloat(num1-num2,'f',-1,64),true
+			
+			} else if arg2.Type == NUMBER {
+			
+				dec := arg2.value+".0"
+				dec1,_ := strconv.ParseFloat(arg1.value,64)
+				dec2,_ := strconv.ParseFloat(dec,64)
+				return strconv.FormatFloat(dec1-dec2,'f',-1,64),true
+			
+			} else if arg2.Type == BOOLEAN {
+			
+				fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
+				os.Exit(0)
+			
+			} else {
+				r1,r2 := []rune(arg1.value),[]rune(arg2.value)
+				sum1,sum2 :=0,0
+				for i := 0; i < len(r1); i++ {
+					sum1 = sum1 + int(r1[i])
+				}
+				for i := 0; i < len(r2); i++ {
+					sum2 = sum2 + int(r2[i])
+				}
+				if sum2>sum1 {
+					ans := arg2.value 
+					return ans,true
+				} else {
+					ans := arg1.value
+					return ans,true
+				}
+			
+				return arg1.value+arg2.value,true
+			
+			}
+		
+		} else if arg1.Type == BOOLEAN {
+
+			if arg2.Type == NUMBER {
+		
+				fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
+				os.Exit(0)
+		
+			} else if arg2.Type == DOUBLE {
+		
+				fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
+				os.Exit(0)
+		
+			} else if arg2.Type == BOOLEAN {
+				var1,var2 := arg1.value,arg2.value
+				if var1 == "plus" {
+					var1 = "true"
+				} else if var1 == "minus" {
+					var1 = "false"
+				}
+
+				if var2 == "plus" {
+					var2 = "true"
+				} else if var2 == "minus" {
+					var2 = "false"
+				}
+		
+				val1,_ := strconv.ParseBool(var1)
+				val2,_ := strconv.ParseBool(var2)
+				return strconv.FormatBool(val1&&(!val2)),true
+		
+			} else {
+				r1,r2 := []rune(arg1.value),[]rune(arg2.value)
+				sum1,sum2 :=0,0
+				for i := 0; i < len(r1); i++ {
+					sum1 = sum1 + int(r1[i])
+				}
+				for i := 0; i < len(r2); i++ {
+					sum2 = sum2 + int(r2[i])
+				}
+				if sum2>sum1 {
+					ans := arg2.value 
+					return ans,true
+				} else {
+					ans := arg1.value
+					return ans,true
+				}
+			
+				return arg1.value+arg2.value,true
+		
+			}
+		
+		} else {
+			r1,r2 := []rune(arg1.value),[]rune(arg2.value)
+			sum1,sum2 :=0,0
+			for i := 0; i < len(r1); i++ {
+				sum1 = sum1 + int(r1[i])
+			}
+			for i := 0; i < len(r2); i++ {
+				sum2 = sum2 + int(r2[i])
+			}
+			if sum2>sum1 {
+				ans := arg2.value 
+				return ans,true
+			} else {
+				ans := arg1.value
+				return ans,true
+			}
+			
+			return arg1.value+arg2.value,true
+		}
+		
+		return NULL,true
+	}}
+
+	MULT := Operators{'*',
+	func(arg1 Data,arg2 Data)(string,bool){
+		if arg1.Type == NUMBER {
+
+			if arg2.Type == NUMBER {
+				
+				num1,_ := strconv.Atoi(arg1.value)
+				num2,_ := strconv.Atoi(arg2.value)
+				return strconv.Itoa((num1*num2)),true
+			
+			} else if arg2.Type == DOUBLE {
+				
+				dec := arg1.value+".0"
+				dec1,_ := strconv.ParseFloat(dec,64)
+				dec2,_ := strconv.ParseFloat(arg2.value,64)
+				return strconv.FormatFloat(dec1*dec2,'f',-1,64),true
+			
+			} else if arg2.Type == BOOLEAN {
+				fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
+				os.Exit(0)
+			
+			} else {
+				times := len(arg2.value)
+				ret := ""
+				for i := 0; i < times; i++ {
+					ret = ret+arg1.value
+				}
+				return ("\""+ret+"\""),true
+			}
+		
+		} else if arg1.Type == DOUBLE {
+			
+			if arg2.Type == DOUBLE {
+			
+				num1,_ := strconv.ParseFloat(arg1.value,64)
+				num2,_ := strconv.ParseFloat(arg2.value,64)
+				return strconv.FormatFloat(num1*num2,'f',-1,64),true
+			
+			} else if arg2.Type == NUMBER {
+			
+				dec := arg2.value+".0"
+				dec1,_ := strconv.ParseFloat(arg1.value,64)
+				dec2,_ := strconv.ParseFloat(dec,64)
+				return strconv.FormatFloat(dec1*dec2,'f',-1,64),true
+			
+			} else if arg2.Type == BOOLEAN {
+			
+				fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
+				os.Exit(0)
+			
+			} else {
+				times := len(arg2.value)
+				ret := ""
+				for i := 0; i < times; i++ {
+					ret = ret+arg1.value
+				}
+				return ("\""+ret+"\""),true
+			}
+		
+		} else if arg1.Type == BOOLEAN {
+
+			if arg2.Type == NUMBER {
+		
+				fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
+				os.Exit(0)
+		
+			} else if arg2.Type == DOUBLE {
+		
+				fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
+				os.Exit(0)
+		
+			} else if arg2.Type == BOOLEAN {
+				var1,var2 := arg1.value,arg2.value
+				if var1 == "plus" {
+					var1 = "true"
+				} else if var1 == "minus" {
+					var1 = "false"
+				}
+
+				if var2 == "plus" {
+					var2 = "true"
+				} else if var2 == "minus" {
+					var2 = "false"
+				}
+		
+				val1,_ := strconv.ParseBool(var1)
+				val2,_ := strconv.ParseBool(var2)
+				return strconv.FormatBool(val1&&val2),true
+		
+			} else {times := len(arg2.value)
+				ret := ""
+				for i := 0; i < times; i++ {
+					ret = ret+arg1.value
+				}
+				return ("\""+ret+"\""),true
+		
+			}
+		
+		} else {
+			if arg2.Type == NUMBER {
+				ret := ""
+				times,_ := strconv.Atoi(arg2.value)
+
+				for i := 0; i < times; i++ {
+					ret = ret+arg1.value
+				}
+
+				return ("\""+ret+"\""),true
+			
+			}else{
+				times := len(arg2.value)
+				ret := ""
+				for i := 0; i < times; i++ {
+					ret = ret+arg1.value
+				}
+				return ("\""+ret+"\""),true
+			}
+		}
+		
+		return NULL,true
+	}}
+
+	DIVIDE := Operators{'/',
+		func(arg1 Data,arg2 Data)(string,bool){
+			if arg1.Type == NUMBER {
+
+				if arg2.Type == NUMBER {
+					
+					num1,_ := strconv.Atoi(arg1.value)
+					num2,_ := strconv.Atoi(arg2.value)
+					return strconv.Itoa((num1/num2)),true
+				
+				} else if arg2.Type == DOUBLE {
+					
+					dec := arg1.value+".0"
+					dec1,_ := strconv.ParseFloat(dec,64)
+					dec2,_ := strconv.ParseFloat(arg2.value,64)
+					return strconv.FormatFloat(dec1/dec2,'f',-1,64),true
+				
+				} else if arg2.Type == BOOLEAN {
+					fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
+					os.Exit(0)
+				
+				} else {
+					num1 := len(arg1.value)
+					num2 := len(arg2.value)
+					result := num1 - num2
+					res := ""
+
+					if (result < 0) {
+						result = num2 - num1
+						rnu := []rune(arg2.value)
+						res = string(rnu[:len(arg2.value)-len(arg1.value)]) 
+					} else {
+						rnu := []rune(arg1.value)
+						res = string(rnu[:len(arg1.value)-len(arg2.value)])
+					}
+
+					
+					return ("\""+res+"\""),true
+				}
+			
+			} else if arg1.Type == DOUBLE {
+				
+				if arg2.Type == DOUBLE {
+				
+					num1,_ := strconv.ParseFloat(arg1.value,64)
+					num2,_ := strconv.ParseFloat(arg2.value,64)
+					return strconv.FormatFloat(num1/num2,'f',-1,64),true
+				
+				} else if arg2.Type == NUMBER {
+				
+					dec := arg2.value+".0"
+					dec1,_ := strconv.ParseFloat(arg1.value,64)
+					dec2,_ := strconv.ParseFloat(dec,64)
+					return strconv.FormatFloat(dec1/dec2,'f',-1,64),true
+				
+				} else if arg2.Type == BOOLEAN {
+				
+					fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
+					os.Exit(0)
+				
+				} else {
+					num1 := len(arg1.value)
+					num2 := len(arg2.value)
+					result := num1 - num2
+					res := ""
+
+					if (result < 0) {
+						result = num2 - num1
+						rnu := []rune(arg2.value)
+						res = string(rnu[:len(arg2.value) -len(arg1.value)]) 
+					} else {
+						rnu := []rune(arg1.value)
+						res = string(rnu[:len(arg1.value)-len(arg2.value)])
+					}
+
+					
+					return ("\""+res+"\""),true
+				
+				}
+			
+			} else if arg1.Type == BOOLEAN {
+
+				if arg2.Type == NUMBER {
+			
+					fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
+					os.Exit(0)
+			
+				} else if arg2.Type == DOUBLE {
+			
+					fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
+					os.Exit(0)
+			
+				} else if arg2.Type == BOOLEAN {
+					var1,var2 := arg1.value,arg2.value
+					if var1 == "plus" {
+						var1 = "true"
+					} else if var1 == "minus" {
+						var1 = "false"
+					}
+
+					if var2 == "plus" {
+						var2 = "true"
+					} else if var2 == "minus" {
+						var2 = "false"
+					}
+			
+					val1,_ := strconv.ParseBool(var1)
+					val2,_ := strconv.ParseBool(var2)
+					return strconv.FormatBool(val1&&(!val2)),true
+			
+				} else {
+
+					num1 := len(arg1.value)
+					num2 := len(arg2.value)
+					result := num1 - num2
+					res := ""
+
+					if (result < 0) {
+						result = num2 - num1
+						rnu := []rune(arg2.value)
+						res = string(rnu[:len(arg2.value)-len(arg1.value)]) 
+					} else {
+						rnu := []rune(arg1.value)
+						res = string(rnu[:len(arg1.value)-len(arg2.value)])
+					}
+
+					
+					return ("\""+res+"\""),true
+				}
+			
+			} else {
+				if arg2.Type == NUMBER{
+					num,_ := strconv.Atoi(arg2.value)
+					str := arg1.value
+					res := ""
+					if num > len(str) {
+						err("Too big a number to use / operator on [operands are string and number]")
+						os.Exit(0)
+					} else {
+						rnu := []rune(str)
+						res = string(rnu[:len(rnu)-num])
+					}
+					return ("\""+res+"\""),true
+				}else{
+					num1 := len(arg1.value)
+					num2 := len(arg2.value)
+					result := num1 - num2
+					res := ""
+					if (result < 0) {
+						result = num2 - num1
+						rnu := []rune(arg2.value)
+						res = string(rnu[:len(arg2.value) - len(arg1.value)]) 
+					} else {
+						rnu := []rune(arg1.value)
+						res = string(rnu[:len(arg1.value)-len(arg2.value)])
+					}
+					return ("\""+res+"\""),true
+			}
+			
+		}
+			return NULL,true
+
+	}}
+	MOD := Operators{'%',
+	func(arg1 Data,arg2 Data)(string,bool){
+		if arg1.Type == NUMBER {
+
+			if arg2.Type == NUMBER {
+				
+				num1,_ := strconv.Atoi(arg1.value)
+				num2,_ := strconv.Atoi(arg2.value)
+				return strconv.Itoa((num1%num2)),true
+			
+			} else if arg2.Type == DOUBLE {
+				err("DOUBLES do not posses the % opperator")
+			
+			} else if arg2.Type == BOOLEAN {
+				fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
+				os.Exit(0)
+			
+			} else {
+				num1 := len(arg1.value)
+				num2 := len(arg2.value)
+				result := num1 - num2
+				res := ""
+				if (result < 0) {
+					result = num2 - num1
+					rnu := []rune(arg2.value)
+					res = string(rnu[len(arg2.value) - len(arg1.value):]) 
+				} else {
+					rnu := []rune(arg1.value)
+					res = string(rnu[len(arg1.value)-len(arg2.value):])
+				}
+				return ("\""+res+"\""),true
+			}
+		
+		} else if arg1.Type == DOUBLE {
+			
+			if arg2.Type == DOUBLE {
+
+				err("DOUBLES do not posses the % opperator")
+			
+			} else if arg2.Type == NUMBER {
+
+				err("DOUBLES do not posses the % opperator")
+			
+			} else if arg2.Type == BOOLEAN {
+			
+				fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
+				os.Exit(0)
+			
+			} else {
+				num1 := len(arg1.value)
+				num2 := len(arg2.value)
+				result := num1 - num2
+				res := ""
+				if (result < 0) {
+					result = num2 - num1
+					rnu := []rune(arg2.value)
+					res = string(rnu[len(arg2.value) - len(arg1.value):]) 
+				} else {
+					rnu := []rune(arg1.value)
+					res = string(rnu[len(arg1.value)-len(arg2.value):])
+				}
+				return ("\""+res+"\""),true
+			}
+		
+		} else if arg1.Type == BOOLEAN {
+
+			if arg2.Type == NUMBER {
+		
+				fmt.Println("\u001B[96m illegal conversion of charge to number\u001B[0m")
+				os.Exit(0)
+		
+			} else if arg2.Type == DOUBLE {
+		
+				fmt.Println("\u001B[96m illegal conversion of charge to Double\u001B[0m")
+				os.Exit(0)
+		
+			} else if arg2.Type == BOOLEAN {
+				err("Charges do not possess [%] operator")
+			} else {
+				num1 := len(arg1.value)
+				num2 := len(arg2.value)
+				result := num1 - num2
+				res := ""
+				if (result < 0) {
+					result = num2 - num1
+					rnu := []rune(arg2.value)
+					res = string(rnu[len(arg2.value) - len(arg1.value):]) 
+				} else {
+					rnu := []rune(arg1.value)
+					res = string(rnu[len(arg1.value)-len(arg2.value):])
+				}
+				return ("\""+res+"\""),true	
+			}
+		
+		} else {
+			if arg2.Type == NUMBER{
+					num,_ := strconv.Atoi(arg2.value)
+					str := arg1.value
+					res := ""
+					if num > len(str) {
+						err("Too big a number to use % operator on [operands are string and number]")
+						os.Exit(0)
+					} else {
+						rnu := []rune(str)
+						res = string(rnu[len(rnu)-num:])
+					}
+					return ("\""+res+"\""),true
+				}else{
+					num1 := len(arg1.value)
+					num2 := len(arg2.value)
+					result := num1 - num2
+					res := ""
+					if (result < 0) {
+						result = num2 - num1
+						rnu := []rune(arg2.value)
+						res = string(rnu[len(arg2.value) - len(arg1.value):]) 
+					} else {
+						rnu := []rune(arg1.value)
+						res = string(rnu[len(arg1.value)-len(arg2.value):])
+					}
+					return ("\""+res+"\""),true
+				}
+			}
+		
+		return NULL,true
+	}}
+
+
+	operatorList = append(operatorList,PLUS,MINUS,MULT,DIVIDE,MOD)
 }

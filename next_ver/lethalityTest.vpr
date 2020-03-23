@@ -1,4 +1,4 @@
-bool = plus
-boolo = plus
-b = bool + boolo
-print "{b}"
+string1 = "helo"
+string2 = "bye"
+and = string1%42
+print "{and}"
