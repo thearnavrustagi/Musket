@@ -610,6 +610,7 @@ func (caller ScopeNode) assignValues (names,values []string,lexScoping bool) {
 		names[i] = strings.TrimSpace(names[i])
 		val := caller.compute(values[i])
 		if lexScoping {
+			fmt.Println("lex")
 			caller.varSave[names[i]] = val
 		} else {
 			caller.searchTheTreeAndPlace(names[i],val)
@@ -620,15 +621,18 @@ func (caller ScopeNode) searchTheTreeAndPlace (name string,value Data) {
 	presentNode := &caller
 	successFullNode := &caller
 	
-	for !reflect.DeepEqual(*presentNode,globalScope) {
+	for !reflect.DeepEqual(presentNode.parent,globalScope.parent) {
+		
 		if (presentNode.varSave[name] != Data{}) {
+			fmt.Println(successFullNode)
 			successFullNode = presentNode
 		}
+
 		presentNode = presentNode.parent
 	}
+
 	successFullNode.varSave[name] = value
 }
-
 func deleteBlock (program []string,startIndex int,endIndex int) ([]string){
 	for i := startIndex; i <= endIndex; i++ {
 		program[i] = ""
@@ -724,6 +728,11 @@ func (caller ScopeNode) checkSpecialFunctions(line string) (bool,int){
 
 	if strings.HasPrefix(line,IF) {
 		caller.tryIf(line)
+		return true,1
+	}
+
+	if strings.HasPrefix(line,WHILE) {
+		caller.tryWhile(line)
 		return true,1
 	}
 	return false,0
@@ -859,27 +868,7 @@ func (caller ScopeNode) tryIf (line string) {
 		os.Exit(0)
 	}
 	line = strings.TrimSpace(string([]rune(line)[:len(line)-1]))
-	line = removeParanthesisIfPresent(line)
-	if strings.HasSuffix(line,IF_ARGS_ARE_EQUAL) {
-		line = strings.TrimSpace(string([]rune(line)[:len(line)-len(IF_ARGS_ARE_EQUAL)]))
-		line = removeParanthesisIfPresent(line)
-		line = removeSyntacticSugar(line)
-		parts := strings.Split(line,",")
-
-
-		for i := 0; i < len(parts); i++ {
-			parts[i] = strings.TrimSpace(parts[i])
-			temp := caller.compute(parts[i])
-			parts[i] = temp.value
-		}
-		equal := true
-		for i := 0; i < len(parts)-1; i++ {
-			equal = equal && (parts[i] == parts[i+1])			
-		}
-		line = strconv.FormatBool(equal)
-	} else {
-		line = caller.compute(line).value
-	}
+	line = caller.computeBooleanCondition(line)
 
 	data := caller.owner.data.data
 	index := caller.presentLine
@@ -901,8 +890,7 @@ func (caller ScopeNode) tryIf (line string) {
 			caller.owner.runThrough(ifEndIndex)
 			os.Exit(0)
 		} else {
-			fmt.Println(ifEndIndex,elseEndIndex)
-			caller.owner.runThrough(ifEndIndex)
+			caller.owner.runThrough(elseEndIndex)
 			os.Exit(0)
 		}
 	} else {
@@ -918,6 +906,33 @@ func (caller ScopeNode) tryIf (line string) {
 		}
 
 	}
+}
+
+func (caller ScopeNode) computeBooleanCondition (line string) (string){
+	line = removeParanthesisIfPresent(line)
+	
+	if strings.HasSuffix(line,IF_ARGS_ARE_EQUAL) {
+		line = strings.TrimSpace(string([]rune(line)[:len(line)-len(IF_ARGS_ARE_EQUAL)]))
+		line = removeParanthesisIfPresent(line)
+		line = removeSyntacticSugar(line)
+		parts := strings.Split(line,",")
+
+
+		for i := 0; i < len(parts); i++ {
+			parts[i] = strings.TrimSpace(parts[i])
+			temp := caller.compute(parts[i])
+			parts[i] = temp.value
+		}
+		equal := true
+		for i := 0; i < len(parts)-1; i++ {
+			equal = equal && (parts[i] == parts[i+1])			
+		}
+		line = strconv.FormatBool(equal)
+	} else {
+		line = caller.compute(line).value
+	}
+
+	return line
 }
 
 func elseExists (program []string,index int) (bool,int){
@@ -940,6 +955,43 @@ func removeParanthesisIfPresent (line string) (string) {
 	}
 
 	return line
+}
+
+func (caller ScopeNode) tryWhile (line string) {
+	ogLine := line
+	index := caller.presentLine
+	program := caller.owner.data.data
+
+	line = string([]rune(line)[len(WHILE):])
+	line = strings.TrimSpace(line)
+
+	if !strings.HasSuffix(line,"{") {
+		err("if block should always end with \"{\"")
+		os.Exit(0)
+	}
+	line = strings.TrimSpace(string([]rune(line)[:len(line)-1]))
+	
+	condition := line
+	while_dataBlock,endIndex := getBlock(program,index,'{','}')
+	//fmt.Println(caller)
+
+	scpNode := ScopeNode{&caller,make(map[string]Data),0,&MethodData{}}
+	WhileMethod := MethodData{"",while_dataBlock,scpNode,caller.owner,scpNode.presentLine,ogLine}
+
+
+	caller.loop(WhileMethod,endIndex,condition)
+}
+
+func (caller ScopeNode) loop (loopMethod MethodData,endIndex int,condition string) {
+	value := caller.computeBooleanCondition(condition)
+
+	if value == "true" {
+		loopMethod.runThrough(1)
+		caller.loop(loopMethod,endIndex,condition)
+	} else {
+		caller.owner.runThrough(endIndex)
+		os.Exit(0)
+	}
 }
 
 func (data MethodData) functionReturn(line string) {
@@ -1245,7 +1297,6 @@ func InititializeOperators() {
 			}
 		
 		} else {
-		
 			return ("\""+arg1.value+arg2.value+"\""),true
 		
 		}
@@ -1981,11 +2032,36 @@ func InititializeOperators() {
 
 	GREATER := Operators{'>',
 	func (arg1,arg2 Data)(string,bool){
+		if arg1.Type == NUMBER && arg2.Type == NUMBER {
+			fmt.Println("num")
+			num1,_ := strconv.Atoi(arg1.value)
+			num2,_ := strconv.Atoi(arg2.value)
+			return strconv.FormatBool(num1>num2),true
+		} else if arg1.Type == DOUBLE && arg2.Type == DOUBLE {
+			num1,_ := strconv.ParseFloat(arg1.value,64)
+			num2,_ := strconv.ParseFloat(arg2.value,64)
+			return strconv.FormatBool(num1>num2),true
+		} else {
+			err("invalid operands")
+			os.Exit(0)
+		}
 		return strconv.FormatBool(arg1.value>arg2.value),true
 	}}
 
 	LESSER := Operators{'<',
 	func (arg1,arg2 Data)(string,bool) {
+		if arg1.Type == NUMBER && arg2.Type == NUMBER {
+			num1,_ := strconv.Atoi(arg1.value)
+			num2,_ := strconv.Atoi(arg2.value)
+			return strconv.FormatBool(num1<num2),true
+		} else if arg1.Type == DOUBLE && arg2.Type == DOUBLE {
+			num1,_ := strconv.ParseFloat(arg1.value,64)
+			num2,_ := strconv.ParseFloat(arg2.value,64)
+			return strconv.FormatBool(num1<num2),true
+		} else {
+			err("invalid operands")
+			os.Exit(0)
+		}
 		return strconv.FormatBool(arg1.value<arg2.value),true	
 	}}
 
