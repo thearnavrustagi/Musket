@@ -75,6 +75,11 @@ func add (a,b){
   - [ ] Structures/classes
   - [ ] For loops
   - [ ] flow control and other advanced functions
+  - [ ] Allowing the usage of parenthesis and semi colons in code
+  - [ ] Debugging the if/else and while's multiprinting error
+- [ ] Maths
+  - [ ] priortizing parenthesis
+  - [ ] BODMAS
 - [ ] Programming features
   - [ ] Smart Interpreter
 ## Unique Features and Syntax
@@ -406,6 +411,14 @@ Well the one which I just developed is called var syntax
   }
   ```
   is eligible code
+  <br>#### while
+  will work with any charge value and operators and also supports the same boolean deciphering as if so the following code is eligible
+  ```python
+  a,b = 2,2
+  while a and b are equal {
+  	# do something
+  }
+  ```
   <br>#### Input
   To take input from the user you have a simple line
   ```python
