@@ -1,4 +1,30 @@
-num1 = "hello"
-num2 = "hello"
-ans = num1?num2
-print "{ans}"
+func main{
+	print "Enter height of the triangle"
+	input h,"> "
+	h = convert h
+	print "{h}"
+	i = 0
+	j = 0
+	
+	while i<h{
+			j = 0
+		while i>j {
+			pure_print "*"
+			j = j+1
+		}
+		print ""
+		i = i+1
+	}
+}
+
+func convert (param) {
+	ans = param?5
+	print "{ans} |{param}|"
+	if param and 5 are equal {
+		return 5
+	}
+	else {
+		print "in else {param}"
+		return 5
+	}
+}
