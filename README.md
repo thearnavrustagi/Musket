@@ -57,11 +57,11 @@ func add (a,b){
    - [ ] type variables                
    - [x] if/else                       
    - [ ] while/for                      
-- [ ] OPERATIONS<br>
+- [x] OPERATIONS<br>
   - [x] arithmatic                    
   - [x] boolean/logical                       
-  - [ ] relational                    
-  - [ ] bitwise                       
+  - [x] relational                    
+  - [x] bitwise                       
 - [ ] PROGRAMMING FEATURES<br>
   - [x] Lexical Variable Scoping
   - [x] Procedural programming        
@@ -302,11 +302,21 @@ Well the one which I just developed is called var syntax
     # both will yield the result "llo"
     ```
   - #### &
-    boolean/logical "and" works the same way as python's "and" or java's "&&"
+    boolean/logical "and" works the same way as python's "and" or java's "&&"<br>it is also bitwise "and" for number operators
   - #### |
-    boolean/logical "or" works the same way as python's "or" or java's "||"
+    boolean/logical "or" works the same way as python's "or" or java's "||"<br>it is also bitwise "or" for number operands <br>This can also be used to find the string with a higher ascii value<br>eg:-
+    ```python
+    str1 = "hello"
+    str2 = "hellp"
+    str = str1|str2 # str will have hellp 
+    ```
   - #### ^
-    boolean/logical "xor" works the same way as java's "^"
+    boolean/logical "xor" works the same way as java's "^"<br>it is also bitwise "xor" for number operands<br>it can also be used on strings to find the smaller of two strings<br>eg:-
+    ```python
+    str1 = "hello"
+    str2 = "hellp"
+    str = str1^str2 # str will have hello 
+    ```
   - #### not
     boolean logical "not" works the same way as python's "not" and java's "!" but has a different declaration
     <br>declaration:-
@@ -319,6 +329,27 @@ Well the one which I just developed is called var syntax
     bool2 = false
     not bool3,bool2  # bool3 will hold the value true
     not bool3,bool1  # bool3 will hold the value false
+    ```
+  - #### > :-
+    works how you expect it to,returns charge
+  - #### < :- 
+    works how you expect it to,returns charge
+  - #### ? :-
+    this is relational "equal to" or "=="<br>eg
+    ```python
+    str1,str2,str3 = "hello","help","hello"
+    bool = str1?str2  # false
+    bool = str2?str3  # false
+    bool = str3?str1  # true
+    ```
+  - #### ! :-
+    this is not boolean "not" this is relational "not equal to" or "!=" like so<br>
+    eg:-
+    ```python
+    str1,str2,str3 = "hello","help","hello"
+    bool = str1!str2  # true
+    bool = str2!str3  # true
+    bool = str3!str1  # false
     ```
 - ### Special Functions
   #### if else<br>
