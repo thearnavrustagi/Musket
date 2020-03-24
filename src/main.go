@@ -48,6 +48,7 @@ const (
 	IF string = "if "
 	IF_ARGS_ARE_EQUAL string = "are equal"
 	ELSE string = "else "
+	WHILE string = "while "
 
 	//special constants
 	NULL = "null"
@@ -1822,6 +1823,17 @@ func InititializeOperators() {
 
 	AND := Operators{'&',
 	func (arg1,arg2 Data) (string,bool) {
+		if arg1.Type == NUMBER {
+			if arg2.Type == NUMBER {
+				num1,_ := strconv.Atoi(arg1.value)
+				num2,_ := strconv.Atoi(arg2.value)
+				return strconv.Itoa((num1&num2)),true
+			} else {
+				err("Both operands should be either of type number or boolean for bitwise/boolean \"and\" to work")
+			}
+		} else {
+			err("Both operands should be either of type number or boolean for bitwise/boolean \"and\" to work")
+		}
 		if arg1.Type == BOOLEAN {
 			if arg2.Type == BOOLEAN {
 				var1,var2 := arg1.value,arg2.value
@@ -1841,17 +1853,26 @@ func InititializeOperators() {
 				val2,_ := strconv.ParseBool(var2)
 				return strconv.FormatBool(val1&&val2),true
 			} else {
-				err("the boolean \"and\" operator can only be used with boolean operands")
+				err("the boolean/bitwise \"and\" operator can only be used with boolean/Number operands")
 			}
 		} else {
-			err("the boolean \"and\" operator can only be used with boolean operands")
+			err("the boolean/bitwise \"and\" operator can only be used with boolean/Number operands")
 		}
 		return NULL,true
 	}}
 
 	OR := Operators {'|',
-	func (arg1,arg2 Data) (string,bool) {	
-		if arg1.Type == BOOLEAN {
+	func (arg1,arg2 Data) (string,bool) {
+
+		if arg1.Type == NUMBER {
+			if arg2.Type == NUMBER {
+				num1,_ := strconv.Atoi(arg1.value)
+				num2,_ := strconv.Atoi(arg2.value)
+				return strconv.Itoa((num1|num2)),true
+			} else {
+				err("Both operands should be either of type number or boolean for bitwise/boolean \"or\" to work")
+			}
+		} else if arg1.Type == BOOLEAN {
 			if arg2.Type == BOOLEAN {
 				var1,var2 := arg1.value,arg2.value
 				if var1 == "plus" {
@@ -1872,6 +1893,28 @@ func InititializeOperators() {
 			} else {
 				err("the boolean \"or\" operator can only be used with boolean operands")
 			}
+		} else if arg1.Type == STRING{ //or gives the greater of the two values
+			if arg2.Type == STRING {
+				r1,r2 := []rune(arg1.value),[]rune(arg2.value)
+				sum1,sum2 :=0,0
+				for i := 0; i < len(r1); i++ {
+					sum1 = sum1 + int(r1[i])
+				}
+				for i := 0; i < len(r2); i++ {
+					sum2 = sum2 + int(r2[i])
+				}
+				if sum2>sum1 {
+					ans := arg2.value 
+					return "\""+ans+"\"",true
+				} else {
+					ans := arg1.value
+					return "\""+ans+"\"",true
+				}
+			
+				return arg1.value+arg2.value,true
+			} else {
+			err("the given operator is not available in "+arg2.Type+" variables")
+			}	
 		} else {
 			err("the boolean \"or\" operator can only be used with boolean operands")
 		}
@@ -1879,8 +1922,17 @@ func InititializeOperators() {
 	}}
 
 	XOR := Operators {'^',
-	func (arg1,arg2 Data) (string,bool) {	
-		if arg1.Type == BOOLEAN {
+	func (arg1,arg2 Data) (string,bool) {
+
+		if arg1.Type == NUMBER {
+			if arg2.Type == NUMBER {
+				num1,_ := strconv.Atoi(arg1.value)
+				num2,_ := strconv.Atoi(arg2.value)
+				return strconv.Itoa((num1^num2)),true
+			} else {
+				err("Both operands should be either of type number or boolean for bitwise/boolean \"xor\" to work")
+			}
+		} else if arg1.Type == BOOLEAN {
 			if arg2.Type == BOOLEAN {
 				var1,var2 := arg1.value,arg2.value
 				if var1 == "plus" {
@@ -1901,13 +1953,48 @@ func InititializeOperators() {
 			} else {
 				err("the boolean \"xor\" operator can only be used with boolean operands")
 			}
+		} else if arg1.Type == STRING { //xor gives the lower of the two values
+			if arg2.Type == STRING {
+				r1,r2 := []rune(arg1.value),[]rune(arg2.value)
+				sum1,sum2 :=0,0
+				for i := 0; i < len(r1); i++ {
+					sum1 = sum1 + int(r1[i])
+				}
+				for i := 0; i < len(r2); i++ {
+					sum2 = sum2 + int(r2[i])
+				}
+				if sum2<sum1 {
+					ans := arg2.value 
+					return "\""+ans+"\"",true
+				} else {
+					ans := arg1.value
+					return "\""+ans+"\"",true
+				}
+			
+				return arg1.value+arg2.value,true
+			}
 		} else {
-			err("the boolean \"xor\" operator can only be used with boolean operands")
+			err("the given operator is not available in "+arg1.Type+" variables")
 		}
 		return NULL,true
 	}}
 
-	// (X || Y) && !(X && Y)
+	GREATER := Operators{'>',
+	func (arg1,arg2 Data)(string,bool){
+		return strconv.FormatBool(arg1.value>arg2.value),true
+	}}
+
+	LESSER := Operators{'<',
+	func (arg1,arg2 Data)(string,bool) {
+		return strconv.FormatBool(arg1.value<arg2.value),true	
+	}}
+
+	INEQUAL := Operators{'!',
+	func (arg1,arg2 Data) (string,bool) {
+		return strconv.FormatBool(arg1.value!=arg2.value),true
+	}}
+
 	operatorList = append(operatorList,PLUS,MINUS,MULT,DIVIDE,MOD)
 	operatorList = append(operatorList,AND,OR,XOR)
+	operatorList = append(operatorList,GREATER,LESSER,INEQUAL)
 }

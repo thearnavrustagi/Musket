@@ -1,22 +1,4 @@
-func main{
-	str = "hello"
-	print "{str}"
-	test str
-	print "hello"
-}
-
-func test (l){
-	print "{l}"
-	g = l/3
-	print "{g}"
-
-	if g and l are equal {
-		print "equal {g} and {l}"
-	}
-	else {
-		print "not equal {g} and {l}"
-		g := "gijfi"
-		print "{g}"
-	}
-	print "{g}"
-}
+num1 = 20
+num2 = 30
+ans = num1!num2
+print "{ans}"
