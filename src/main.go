@@ -90,6 +90,11 @@ type ScopeNode struct {
 	owner *MethodData
 }
 
+type LoopData struct {
+	data MethodData
+	condition string
+}
+
 type VarSyntaxData struct {
 	data Block
 }
@@ -507,6 +512,7 @@ func (data MethodData) runThroughFnc (index int,scpNode ScopeNode) {
 	}
 
 	data.runThrough(1)
+
 }
 
 func (data MethodData) runThrough (index int) {
@@ -514,6 +520,7 @@ func (data MethodData) runThrough (index int) {
 	data.scopeNode.owner = &data
 
 	for i := index; i < len(program); i++ {
+		//fmt.Println(program)
 
 		data.scopeNode.presentLine = i
 		program[i] = strings.TrimSpace(program[i])
@@ -620,11 +627,9 @@ func (caller ScopeNode) assignValues (names,values []string,lexScoping bool) {
 func (caller ScopeNode) searchTheTreeAndPlace (name string,value Data) {
 	presentNode := &caller
 	successFullNode := &caller
-	
-	for !reflect.DeepEqual(presentNode.parent,globalScope.parent) {
+	for !reflect.DeepEqual(presentNode.owner,&MethodData{}) {
 		
 		if (presentNode.varSave[name] != Data{}) {
-			fmt.Println(successFullNode)
 			successFullNode = presentNode
 		}
 
@@ -788,25 +793,14 @@ func (caller ScopeNode) replaceVars (statement string) (string){
 }
 
 func (caller ScopeNode)searchTreeFor(name string) (Data,bool){
-	found := false
-	itrnext := true
 	presentNode := &caller
-	for !found {
-		if itrnext {
-			data := presentNode.varSave[name].stringRep
-			if data != "" {
-				return presentNode.varSave[name],true
-			}
-			if (reflect.DeepEqual(presentNode.parent.varSave,globalScope.varSave)){
-				presentNode = presentNode.parent
-				itrnext = false
-				found = true
-			} else {
-				presentNode = presentNode.parent
-			}
-		} else {
-			return Data{},false
+	
+	for !reflect.DeepEqual(presentNode.owner,&MethodData{}) {
+		if !reflect.DeepEqual(presentNode.varSave[name],Data{}) {
+			return presentNode.varSave[name],true
 		}
+
+		presentNode = presentNode.parent
 	}
 
 	return Data{},false
@@ -829,9 +823,11 @@ func (caller ScopeNode) takeInput (line string) {
 	caller.pure_print(PURE_PRINT+" "+parts[1]+"\"")
 	reader := bufio.NewReader(os.Stdin)
 	str,_ := reader.ReadString('\n')
-	nstr := "\""+str+"\""
+	nstr := "\""+string([]rune(str)[:len(str)-1])+"\""
 
-	caller.varSave[parts[0]] = Data{nstr,STRING,str}
+	data := encapsulate(nstr,' ').data
+
+	caller.searchTheTreeAndPlace(parts[0],data)
 }
 
 func (caller ScopeNode) NOT (line string) {
@@ -887,25 +883,72 @@ func (caller ScopeNode) tryIf (line string) {
 	if line == "true" {
 		ifBlock.runThrough(1)
 		if elseEndIndex == -1 {
-			caller.owner.runThrough(ifEndIndex)
-			os.Exit(0)
+			if strings.HasPrefix(ifBlock.calledBy.data.data[0],WHILE) {
+				mData := *(caller.owner)
+
+				prevCallIndex := mData.calledBy.scopeNode.presentLine
+
+				line := mData.data.data[0]
+
+				line = string([]rune(line)[len(WHILE):])
+				line = strings.TrimSpace(line)
+
+				line = strings.TrimSpace(string([]rune(line)[:len(line)-1]))
+				
+				condition := line
+
+				caller.owner.calledBy.scopeNode.loop(mData,ifEndIndex,prevCallIndex+len(mData.data.data),condition)
+			
+			} else {
+				caller.owner.runThrough(ifEndIndex)
+				os.Exit(0)
+			}
+		
+
 		} else {
-			caller.owner.runThrough(elseEndIndex)
-			os.Exit(0)
+			if strings.HasPrefix(ifBlock.calledBy.data.data[0],WHILE) {
+				caller.CallerIsWhile(elseEndIndex)
+			} else {
+				caller.owner.runThrough(elseEndIndex)
+				os.Exit(0)
+			}
 		}
 	} else {
 		else_exists,_ := elseExists(data,index)
 		if else_exists  {
-
 			elseBlock.runThrough(0)
-			caller.owner.runThrough(elseEndIndex)
-			os.Exit(0)
+			if strings.HasPrefix(ifBlock.calledBy.data.data[0],WHILE) {
+				caller.CallerIsWhile(elseEndIndex)
+			} else {
+				caller.owner.runThrough(elseEndIndex)
+				os.Exit(0)
+			}
 		} else {
-			caller.owner.runThrough(ifEndIndex)
-			os.Exit(0)
+			if strings.HasPrefix(ifBlock.calledBy.data.data[0],WHILE) {
+				caller.CallerIsWhile(ifEndIndex)
+			} else {
+				caller.owner.runThrough(ifEndIndex)
+				os.Exit(0)
+			}
 		}
 
 	}
+}
+
+func (caller ScopeNode)CallerIsWhile (endIndex int) {
+		mData := *(caller.owner)
+
+		prevCallIndex := mData.calledBy.scopeNode.presentLine
+
+		line := mData.data.data[0]
+
+		line = string([]rune(line)[len(WHILE):])
+		line = strings.TrimSpace(line)
+
+		line = strings.TrimSpace(string([]rune(line)[:len(line)-1]))
+				
+		condition := line
+		caller.owner.calledBy.scopeNode.loop(mData,endIndex,prevCallIndex+len(mData.data.data),condition)
 }
 
 func (caller ScopeNode) computeBooleanCondition (line string) (string){
@@ -966,31 +1009,50 @@ func (caller ScopeNode) tryWhile (line string) {
 	line = strings.TrimSpace(line)
 
 	if !strings.HasSuffix(line,"{") {
-		err("if block should always end with \"{\"")
+		err("while block should always end with \"{\"")
 		os.Exit(0)
 	}
 	line = strings.TrimSpace(string([]rune(line)[:len(line)-1]))
 	
 	condition := line
+	//while block creation
 	while_dataBlock,endIndex := getBlock(program,index,'{','}')
-	//fmt.Println(caller)
 
 	scpNode := ScopeNode{&caller,make(map[string]Data),0,&MethodData{}}
 	WhileMethod := MethodData{"",while_dataBlock,scpNode,caller.owner,scpNode.presentLine,ogLine}
 
 
-	caller.loop(WhileMethod,endIndex,condition)
+	caller.loop(WhileMethod,1,endIndex,condition)
 }
 
-func (caller ScopeNode) loop (loopMethod MethodData,endIndex int,condition string) {
+func (caller ScopeNode) loop (loopMethod MethodData,startIndex,endIndex int,condition string) {
 	value := caller.computeBooleanCondition(condition)
 
+	//fmt.Println(condition,endIndex)
 	if value == "true" {
-		loopMethod.runThrough(1)
-		caller.loop(loopMethod,endIndex,condition)
+		loopMethod.runThrough(startIndex)
+		caller.loop(loopMethod,1,endIndex,condition)
 	} else {
-		caller.owner.runThrough(endIndex)
-		os.Exit(0)
+		if strings.HasPrefix(loopMethod.calledBy.data.data[0],WHILE) {
+			mData := *(caller.owner)
+
+			prevCallIndex := mData.calledBy.scopeNode.presentLine
+
+			line := mData.data.data[0]
+
+			line = string([]rune(line)[len(WHILE):])
+			line = strings.TrimSpace(line)
+
+			line = strings.TrimSpace(string([]rune(line)[:len(line)-1]))
+			
+			condition := line
+
+			caller.owner.calledBy.scopeNode.loop(mData,endIndex,prevCallIndex+len(mData.data.data),condition)
+			os.Exit(0)
+		} else {
+			loopMethod.calledBy.runThrough(endIndex)
+			os.Exit(0)
+		}
 	}
 }
 
@@ -1058,7 +1120,7 @@ func decipherType (args string) (string) {
 func createStringRep (line string,TYPE string) (string){
 	switch TYPE {
 	case STRING:
-		return "\u001B[96m"+string([]rune(line)[1:len(line)-1])+"\u001B[0m"
+		return "\u001B[96m"+string([]rune(line)[1:len(line)-1])
 	case BOOLEAN:
 		if line == "plus" || line == "true"{
 			return "true"
@@ -1066,16 +1128,17 @@ func createStringRep (line string,TYPE string) (string){
 			return "false"
 		}
 	case SYSTEM_STRING:
-		return "\u001B[95m"+line+"\u001B[0m"
+		return "\u001B[95m"+line
 	default:
-		return "\u001B[96m"+strings.TrimSpace(line)+"\u001B[0m"
+		return "\u001B[96m"+strings.TrimSpace(line)
 	}
 }
 
 func (caller ScopeNode) compute(value string) (Data) {
 	value = strings.TrimSpace(value)
 	if hasNoOperators(value) {
-		temp,found := caller.searchTreeFor(value)
+		value = value+"+0"
+		/*temp,found := caller.searchTreeFor(value)
 		if found {
 			value = temp.value
 		}
@@ -1083,7 +1146,7 @@ func (caller ScopeNode) compute(value string) (Data) {
 		Type := decipherType(strings.TrimSpace(value))
 		valueD := value
 		
-		return Data{value,Type,createStringRep(valueD,Type)}
+		return Data{value,Type,createStringRep(valueD,Type)}*/
 	}
 
 	value = caller.applyOperators(value)
@@ -1137,7 +1200,6 @@ func (caller ScopeNode) applyOperators(line string) (string){
 			isAFunction,name := checkIfAFunction(repr)
 			if isAFunction {
 				caller.callFunction(repr,name,*caller.owner,caller.presentLine)
-				os.Exit(0)
 			}
 			str := repr + string(mapp[splitPoints[i+1]])
 			parts = append(parts,str)
@@ -2033,7 +2095,6 @@ func InititializeOperators() {
 	GREATER := Operators{'>',
 	func (arg1,arg2 Data)(string,bool){
 		if arg1.Type == NUMBER && arg2.Type == NUMBER {
-			fmt.Println("num")
 			num1,_ := strconv.Atoi(arg1.value)
 			num2,_ := strconv.Atoi(arg2.value)
 			return strconv.FormatBool(num1>num2),true

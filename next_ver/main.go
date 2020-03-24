@@ -512,6 +512,7 @@ func (data MethodData) runThroughFnc (index int,scpNode ScopeNode) {
 	}
 
 	data.runThrough(1)
+
 }
 
 func (data MethodData) runThrough (index int) {
@@ -519,7 +520,7 @@ func (data MethodData) runThrough (index int) {
 	data.scopeNode.owner = &data
 
 	for i := index; i < len(program); i++ {
-		fmt.Println(program)
+		//fmt.Println(program)
 
 		data.scopeNode.presentLine = i
 		program[i] = strings.TrimSpace(program[i])
@@ -882,25 +883,72 @@ func (caller ScopeNode) tryIf (line string) {
 	if line == "true" {
 		ifBlock.runThrough(1)
 		if elseEndIndex == -1 {
-			caller.owner.runThrough(ifEndIndex)
-			os.Exit(0)
+			if strings.HasPrefix(ifBlock.calledBy.data.data[0],WHILE) {
+				mData := *(caller.owner)
+
+				prevCallIndex := mData.calledBy.scopeNode.presentLine
+
+				line := mData.data.data[0]
+
+				line = string([]rune(line)[len(WHILE):])
+				line = strings.TrimSpace(line)
+
+				line = strings.TrimSpace(string([]rune(line)[:len(line)-1]))
+				
+				condition := line
+
+				caller.owner.calledBy.scopeNode.loop(mData,ifEndIndex,prevCallIndex+len(mData.data.data),condition)
+			
+			} else {
+				caller.owner.runThrough(ifEndIndex)
+				os.Exit(0)
+			}
+		
+
 		} else {
-			caller.owner.runThrough(elseEndIndex)
-			os.Exit(0)
+			if strings.HasPrefix(ifBlock.calledBy.data.data[0],WHILE) {
+				caller.CallerIsWhile(elseEndIndex)
+			} else {
+				caller.owner.runThrough(elseEndIndex)
+				os.Exit(0)
+			}
 		}
 	} else {
 		else_exists,_ := elseExists(data,index)
 		if else_exists  {
-
 			elseBlock.runThrough(0)
-			caller.owner.runThrough(elseEndIndex)
-			os.Exit(0)
+			if strings.HasPrefix(ifBlock.calledBy.data.data[0],WHILE) {
+				caller.CallerIsWhile(elseEndIndex)
+			} else {
+				caller.owner.runThrough(elseEndIndex)
+				os.Exit(0)
+			}
 		} else {
-			caller.owner.runThrough(ifEndIndex)
-			os.Exit(0)
+			if strings.HasPrefix(ifBlock.calledBy.data.data[0],WHILE) {
+				caller.CallerIsWhile(ifEndIndex)
+			} else {
+				caller.owner.runThrough(ifEndIndex)
+				os.Exit(0)
+			}
 		}
 
 	}
+}
+
+func (caller ScopeNode)CallerIsWhile (endIndex int) {
+		mData := *(caller.owner)
+
+		prevCallIndex := mData.calledBy.scopeNode.presentLine
+
+		line := mData.data.data[0]
+
+		line = string([]rune(line)[len(WHILE):])
+		line = strings.TrimSpace(line)
+
+		line = strings.TrimSpace(string([]rune(line)[:len(line)-1]))
+				
+		condition := line
+		caller.owner.calledBy.scopeNode.loop(mData,endIndex,prevCallIndex+len(mData.data.data),condition)
 }
 
 func (caller ScopeNode) computeBooleanCondition (line string) (string){
@@ -974,15 +1022,37 @@ func (caller ScopeNode) tryWhile (line string) {
 	WhileMethod := MethodData{"",while_dataBlock,scpNode,caller.owner,scpNode.presentLine,ogLine}
 
 
-	caller.loop(WhileMethod,endIndex,condition)
+	caller.loop(WhileMethod,1,endIndex,condition)
 }
 
-func (caller ScopeNode) loop (loopMethod MethodData,endIndex int,condition string) {
+func (caller ScopeNode) loop (loopMethod MethodData,startIndex,endIndex int,condition string) {
 	value := caller.computeBooleanCondition(condition)
 
+	//fmt.Println(condition,endIndex)
 	if value == "true" {
-		loopMethod.runThrough(1)
-		caller.loop(loopMethod,endIndex,condition)
+		loopMethod.runThrough(startIndex)
+		caller.loop(loopMethod,1,endIndex,condition)
+	} else {
+		if strings.HasPrefix(loopMethod.calledBy.data.data[0],WHILE) {
+			mData := *(caller.owner)
+
+			prevCallIndex := mData.calledBy.scopeNode.presentLine
+
+			line := mData.data.data[0]
+
+			line = string([]rune(line)[len(WHILE):])
+			line = strings.TrimSpace(line)
+
+			line = strings.TrimSpace(string([]rune(line)[:len(line)-1]))
+			
+			condition := line
+
+			caller.owner.calledBy.scopeNode.loop(mData,endIndex,prevCallIndex+len(mData.data.data),condition)
+			os.Exit(0)
+		} else {
+			loopMethod.calledBy.runThrough(endIndex)
+			os.Exit(0)
+		}
 	}
 }
 
@@ -1050,7 +1120,7 @@ func decipherType (args string) (string) {
 func createStringRep (line string,TYPE string) (string){
 	switch TYPE {
 	case STRING:
-		return "\u001B[96m"+string([]rune(line)[1:len(line)-1])+"\u001B[0m"
+		return "\u001B[96m"+string([]rune(line)[1:len(line)-1])
 	case BOOLEAN:
 		if line == "plus" || line == "true"{
 			return "true"
@@ -1058,9 +1128,9 @@ func createStringRep (line string,TYPE string) (string){
 			return "false"
 		}
 	case SYSTEM_STRING:
-		return "\u001B[95m"+line+"\u001B[0m"
+		return "\u001B[95m"+line
 	default:
-		return "\u001B[96m"+strings.TrimSpace(line)+"\u001B[0m"
+		return "\u001B[96m"+strings.TrimSpace(line)
 	}
 }
 
