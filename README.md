@@ -49,28 +49,34 @@ func add (a,b){
  ```
  #### the whole syntax is not made but here are the parts that are made<br>
  PRESENT SYNTAX <br>
- - [ ] SYNTAX<br>
+ ## RELEASE 1
+ - [x] SYNTAX<br>
    - [x] normal assignment
    - [x] syntax assignment
    - [X] printing                      
-   - [x] user input                    
-   - [ ] type variables                
+   - [x] user input                
    - [x] if/else                       
-   - [ ] while/for                      
+   - [x] while
 - [x] OPERATIONS<br>
   - [x] arithmatic                    
   - [x] boolean/logical                       
   - [x] relational                    
   - [x] bitwise                       
-- [ ] PROGRAMMING FEATURES<br>
+- [x] PROGRAMMING FEATURES<br>
   - [x] Lexical Variable Scoping
-  - [x] Procedural programming        
-  - [ ] Object Oriented Programming   
+  - [x] Procedural programming   
   - [x] Functional Programming   
   - [x] Variable Syntax
-  - [ ] Smart Interpreter
   - [x] Auto Main
 - [x] ERROR_HANDELING
+## RELEASE 2
+- [ ] SYNTAX
+  - [ ] Multi Threading
+  - [ ] Structures/classes
+  - [ ] For loops
+  - [ ] flow control and other advanced functions
+- [ ] Programming features
+  - [ ] Smart Interpreter
 ## Unique Features and Syntax
 Well the one which I just developed is called var syntax
 - ### VAR_SYNTAX<br>
