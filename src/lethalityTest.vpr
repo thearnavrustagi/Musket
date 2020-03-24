@@ -1,4 +1,4 @@
-num1 = 20
-num2 = 30
-ans = num1!num2
+num1 = "hello"
+num2 = "hello"
+ans = num1?num2
 print "{ans}"

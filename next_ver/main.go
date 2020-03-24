@@ -1994,7 +1994,12 @@ func InititializeOperators() {
 		return strconv.FormatBool(arg1.value!=arg2.value),true
 	}}
 
+	EQUAL := Operators{'?',
+	func (arg1,arg2 Data) (string,bool) {
+		return strconv.FormatBool(arg1.value==arg2.value),true
+	}}
+
 	operatorList = append(operatorList,PLUS,MINUS,MULT,DIVIDE,MOD)
 	operatorList = append(operatorList,AND,OR,XOR)
-	operatorList = append(operatorList,GREATER,LESSER,INEQUAL)
+	operatorList = append(operatorList,GREATER,LESSER,INEQUAL,EQUAL)
 }
