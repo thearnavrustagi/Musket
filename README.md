@@ -2,7 +2,7 @@
 code is in developement stage please wait for a release
 ## The Language
   Musket is an open source project which is aiming to create a formal,reliable and efficient language like go and c++ but also a language with short,concise and verbose syntax like python and ruby
-sample program
+<br>**sample program**
 ```python
 x = 20
 a,b,c = 10,15,17
