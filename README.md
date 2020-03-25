@@ -247,8 +247,6 @@ Well the one which I just developed is called var syntax
     declaration
     ```
     bool = true
-    # or
-    bool = plus
     ```
   - ##### String
     an array of characters or a line of legible characters<br>declaration
