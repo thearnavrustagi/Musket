@@ -32,13 +32,16 @@ const (
 	LEXICAL_VAR_SCOPE_ASIGNMENT string = ":= "
 	SYNTACTIC_ASSIGNMENT        string = "<-"
 
-	RETURN_STATEMENT string = "return "
+	COMMENT_START        string = "#"
+	DECLARATION_DELIM    string = " ... "
+	THREAD_ELEMENT_DELIM string = ";"
 
-	COMMENT_START string = "#"
-
-	METHOD_DECLARATION string = "func "
-	VAR_DECALRATION    string = "var "
-	SCOPE_DECLARATION  string = "scope "
+	RETURN_STATEMENT    string = "return "
+	METHOD_DECLARATION  string = "func "
+	VAR_DECALRATION     string = "var "
+	SCOPE_DECLARATION   string = "scope "
+	PROCESS_DECLARATION string = "process "
+	THREAD_EXECUTION    string = "run ... concurrently"
 
 	//special syntax
 	PRINTING          string = "print "
@@ -120,6 +123,15 @@ type NodePointer struct {
 	action rune
 }
 
+type Thread struct {
+	function string
+	name     string
+}
+
+var threadSave map[string]Thread
+
+//var processes map[string]Process
+
 var varSyntaxSave map[string]VarSyntaxData
 var varSyntaxNames []string
 var methodSave map[string]*MethodData
@@ -140,6 +152,7 @@ func main() {
 	args := getUserArgs()
 
 	if args != "shell" {
+		threadSave = make(map[string]Thread)
 		methodSave = make(map[string]*MethodData)
 		varSyntaxSave = make(map[string]VarSyntaxData)
 		globalScope = ScopeNode{nil, make(map[string]Data), 0, &MethodData{}}
@@ -148,8 +161,9 @@ func main() {
 		startExec(program)
 	} else {
 		fmt.Println("WELCOME TO VIPER LANG")
-
 		for true {
+			//process = make(map[string]Process)
+			threadSave = make(map[string]Thread)
 			methodSave = make(map[string]*MethodData)
 			varSyntaxSave = make(map[string]VarSyntaxData)
 			globalScope = ScopeNode{nil, make(map[string]Data), 0, &MethodData{}}
@@ -170,6 +184,7 @@ func main() {
 }
 
 func nullifyData() {
+	threadSave = nil
 	varSyntaxSave = nil
 	methodSave = nil
 	globalScope = ScopeNode{}
@@ -286,6 +301,10 @@ func StaticallyInitialize(program []string) {
 			continue
 		}
 
+		/*if AProcessIsBeingDeclared(program[i]) {
+			program = declareProcess(program,i)
+		}*/
+
 		if strings.HasPrefix(program[i], METHOD_DECLARATION) {
 
 			parts := []rune(program[i])
@@ -305,6 +324,22 @@ func StaticallyInitialize(program []string) {
 	StartExecution(program)
 }
 
+/*
+func AProcessIsBeingDeclared (line string) (bool) {
+	return strings.HasPrefix(line,PROCESS_DECLARATION)
+}
+
+func declareProcess (program []string,index int) {
+	line := program[index]
+	name := strings.TrimSpace(string([]rune(line)[len(process):]))
+	name := strings.TrimSpace(string([]rune(name)[:len(name)-1]))
+	block,endIndex := getBlock(program,index,'{','}')
+	program = deleteBlock(program,index,endIndex)
+
+	process[name] = block
+	return program
+}
+*/
 func getNameAndParam(meth string) (string, string) {
 	meth = strings.TrimSpace(meth)
 	parts := []rune(meth)
@@ -532,6 +567,10 @@ func (data MethodData) runThrough(index int) {
 			continue
 		}
 
+		if threadExecution(program[i]) {
+			data.scopeNode.runThread(program[i])
+		}
+
 		if assignable(program[i]) {
 			data.scopeNode.assign(program[i])
 			continue
@@ -603,6 +642,58 @@ func (caller ScopeNode) lexScopingAssign(args string) {
 	rhs := strings.Split(strings.TrimSpace(tempParts[1]), ",")
 
 	caller.assignValues(lhs, rhs, true)
+}
+
+func threadExecution(line string) bool {
+	parts := strings.Split(THREAD_EXECUTION, DECLARATION_DELIM)
+	condition1 := strings.HasPrefix(line, parts[0])
+	condition2 := strings.HasSuffix(line, parts[1])
+
+	return condition1 && condition2
+}
+
+func (caller ScopeNode) runThread(line string) {
+	parts := strings.Split(THREAD_EXECUTION, DECLARATION_DELIM)
+	name := string([]rune(line)[len(parts[0]) : len(line)-len(parts[1])])
+	name = strings.TrimSpace(name)
+	name = removeIfPresent(name, "[", "]")
+	elems := strings.Split(name, THREAD_ELEMENT_DELIM)
+
+	thisThread := Thread{}
+
+	for i := 0; i < len(elems); i++ {
+		elems[i] = strings.TrimSpace(elems[i])
+
+		switch i {
+		case 0:
+			thisThread.function = elems[0]
+		case 1:
+			if decipherType(elems[1]) == NUMBER {
+				//thisThread.priority,_ = strconv.Atoi(elems[1])
+			} else {
+				thisThread.name = elems[1]
+			}
+		case 2:
+			if decipherType(elems[2]) == NUMBER {
+				//thisThread.priority,_ = strconv.Atoi(elems[2])
+			} else {
+				thisThread.name = elems[2]
+			}
+		default:
+			err("Too many arguments to call a thread")
+		}
+
+	}
+	if thisThread.name != "" {
+		threadSave[thisThread.name] = thisThread
+	}
+
+	itIs, name := functionCall(thisThread.function)
+	if !itIs {
+		err("the function called in the thread does not exist")
+	}
+	go caller.callFunction(thisThread.function, name, *(caller.owner), caller.presentLine)
+
 }
 
 func (caller ScopeNode) assignValues(names, values []string, lexScoping bool) {
@@ -943,11 +1034,12 @@ func (caller ScopeNode) CallerIsWhile(endIndex int) {
 }
 
 func (caller ScopeNode) computeBooleanCondition(line string) string {
-	line = removeParanthesisIfPresent(line)
+	line = removeIfPresent(line, "(", ")")
+	line = strings.TrimSpace(line)
 
 	if strings.HasSuffix(line, IF_ARGS_ARE_EQUAL) {
 		line = strings.TrimSpace(string([]rune(line)[:len(line)-len(IF_ARGS_ARE_EQUAL)]))
-		line = removeParanthesisIfPresent(line)
+		line = removeIfPresent(line, "(", ")")
 		line = removeSyntacticSugar(line)
 		parts := strings.Split(line, ",")
 
@@ -961,11 +1053,23 @@ func (caller ScopeNode) computeBooleanCondition(line string) string {
 			equal = equal && (parts[i] == parts[i+1])
 		}
 		line = strconv.FormatBool(equal)
+	} else if IsBlank(line) || line == "true" {
+		return "true"
 	} else {
 		line = caller.compute(line).value
 	}
 
 	return line
+}
+
+func IsBlank(line string) bool {
+	elems := []rune(line)
+	for i := 0; i < len(elems); i++ {
+		if elems[i] != ' ' {
+			return false
+		}
+	}
+	return true
 }
 
 func elseExists(program []string, index int) (bool, int) {
@@ -982,8 +1086,8 @@ func deleteElse(program []string, index int) {
 	deleteBlock(program, index, endIndex)
 }
 
-func removeParanthesisIfPresent(line string) string {
-	if strings.HasPrefix(line, "(") && strings.HasSuffix(line, ")") {
+func removeIfPresent(line, delim1, delim2 string) string {
+	if strings.HasPrefix(line, delim1) && strings.HasSuffix(line, delim2) {
 		line = string([]rune(line)[1 : len(line)-1])
 	}
 

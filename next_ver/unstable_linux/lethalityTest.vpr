@@ -2,20 +2,22 @@ func main{
 	h = 10
 	i = 0
 	j = 0
-	
+
+	run test(3) concurrently
+
 	while i<h{
 		j = 0
-		while i>j {
+		while {
 			pure_print "{j}"
-			test 30
 			
 			j = j+1
 		}
-		print "out"
 		i = i+1
 	}
 }
 
 func test (i) {
-	pure_print "{i}"
+	while true{
+		print "I EXIST"
+	}
 }
