@@ -66,41 +66,43 @@ func add (a,b){
 
 ## About the file<br><br>
 the extension for the file should be .mskt<br><br>
-## The code<br>
-Okay this is solely for people who are curious and want to dive deep in mu monolthic code I shall explain the core ideals and basically how my code works taking it from the easist part to the hardest
-- ### Operators
-  Oh this thing gave me nightmares not because it was hard but because it was boring,redundant and sooo buggy,so what I did was create a structure Data with three features :-
-  - #### value
-    creates non colored string representation
-  - #### type
-    the data type of the value
-  - #### stringRep
-    the colored representation of the string
-  then I created a structure Operators which had 2 members:-
-  - #### rep
-    rune(char) representation of the operator
-  - #### action
-    a function to be called on the two operands
-  then I created a list of Operators called oprList or operatorList and everytime compute was called the whole array was itterated to find the required operator which was then applied
-- ### lexical variable Scoping
-  well this was the first time I applied brainsfor the code and it turned out amazing to my surprise, so how was this made? Well the code's variables are seperated in a reversed tree data structure, let me explain a little more, a basic element of the program is a MethodData structure with the following composition:-
-  ```go
-  type MethodData struct {
-	parameters string
-	data Block
-	scopeNode ScopeNode
-	calledBy *MethodData
-	calledAt int
-	calledWith string
-  }
 
-  type ScopeNode struct {
-  	parent *ScopeNode
-  	varSave map[string]Data
-  	presentLine int
-  	owner *MethodData
-  }
+## How to run<br>
+- ### using shell script<br>
+  I have added shell script in the following code for faster execution **This will work in linux or any other UNIX os which use bash script or have bash** <br>here are some lines you will have to write on the bash before actually being able to execute the shell script
+  ```bash
+  $ chmod +x viper  # makes the script executable
+  $ export PATH=$PATH:~/Documents/VIPER-master/src/linux # you can also use the mac branch as both are the same
   ```
-  Do you see that pointer parent in ScopeNode,that points to the ScopeNode of the function that calls any given function thus it results in some kind of tree with globalScope(biggest scope) at the top and global scope points towards an empty ScopeNode,it is a recersed tree so the number of childnodes are always 1 and parents "n"<br>The ScopeNode and MethodData used to be very simple structures but I soon realized that I needed a ton of information about the function to carry successful execution of the code and I could not use MethodData structures as my code was deeply integrated with ScopeNode structures so I had to create the owner pointer in the ScopeNode structure
-- ### Assignment and computation
-  This was exhausting,The Idea was simple,to use linked lists to calculate the answers but my limited knowledge of pointers and creation of several complex data structures slowed me down a lot(it took me somewhat 2 hours to do this)
+  after executing the given lines the following commands will become valid only for **THE PRESENT TERMINAL SESSION** 
+  ```shell
+  viper run [args]
+  # or
+  viper -r [args]
+  ```
+  this will execute the desired file another alternative to this is
+  ```shell
+  viper run -d
+  # or
+  viper -r -d
+  ```
+  this will run lethalityTest.vpr you can change the contents in it if you want to run the viper shell with the bash just type
+  ```shell
+  viper shell
+  # or
+  viper -s
+  ```
+  <br>For the present commands which were added to the script type 
+  ```shell
+  viper --help
+  # or
+  viper help
+  # or
+  viper
+  ```
+  <br><br>
+- ### Using PowerShell
+  I use linux and I have neither learned nor do I use powershell so I don't know powerShell BUT I am going to learn it moving on and when I do then this section will be more appealing then it is right now
+- ### using go code<br>
+  open the terminal or ide and compile and run the go code then it will ask for an argument "> " then just type in "run fileName.vpr", the file should be in the same directory as the file or pwd(present working directory), if you want quicker access then modify the lethalityTest.vpr and type "run -d" as it is set to default path <br>type quit or control-c to exit<br><br>
+
