@@ -365,41 +365,4 @@ Well the one which I just developed is called var syntax
   pure_print[args in double quotes]
   ```
   print is equivalent to System.out.println() and pure_print is equivalent to System.out.print()
-## How to run<br>
-- ### using shell script<br>
-  I have added shell script in the following code for faster execution **This will work in linux or any other UNIX os which use bash script or have bash** <br>here are some lines you will have to write on the bash before actually being able to execute the shell script
-  ```bash
-  $ chmod +x viper  # makes the script executable
-  $ export PATH=$PATH:~/Documents/VIPER-master/src/linux # you can also use the mac branch as both are the same
-  ```
-  after executing the given lines the following commands will become valid only for **THE PRESENT TERMINAL SESSION** 
-  ```shell
-  viper run [args]
-  # or
-  viper -r [args]
-  ```
-  this will execute the desired file another alternative to this is
-  ```shell
-  viper run -d
-  # or
-  viper -r -d
-  ```
-  this will run lethalityTest.vpr you can change the contents in it if you want to run the viper shell with the bash just type
-  ```shell
-  viper shell
-  # or
-  viper -s
-  ```
-  <br>For the present commands which were added to the script type 
-  ```shell
-  viper --help
-  # or
-  viper help
-  # or
-  viper
-  ```
-  <br><br>
-- ### Using PowerShell
-  I use linux and I have neither learned nor do I use powershell so I don't know powerShell BUT I am going to learn it moving on and when I do then this section will be more appealing then it is right now
-- ### using go code<br>
-  open the terminal or ide and compile and run the go code then it will ask for an argument "> " then just type in "run fileName.vpr", the file should be in the same directory as the file or pwd(present working directory), if you want quicker access then modify the lethalityTest.vpr and type "run -d" as it is set to default path <br>type quit or control-c to exit<br><br>
+
