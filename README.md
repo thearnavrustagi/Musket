@@ -71,11 +71,11 @@ func add (a,b){
 - [x] ERROR_HANDELING
 ## RELEASE 2
 - [ ] SYNTAX
-  - [ ] Multi Threading
+  - [x] Multi Threading (more like processes)
   - [ ] Structures/classes
   - [ ] For loops
   - [ ] flow control and other advanced functions
-  - [ ] Allowing the usage of parenthesis and semi colons in code
+  - [x] Allowing the usage of parenthesis and semi colons in code
   - [x] Debugging the if/else and while's multiprinting error
 - [ ] Maths
   - [ ] priortizing parenthesis
@@ -179,6 +179,16 @@ Well the one which I just developed is called var syntax
   display()
   ```
   assuming that their is some function that requires no parameters
+- ### Multi-threading
+  Viper supports multi threading the syntax is as follows
+  ```python
+  run [ [function name] ] concurrently
+  ```
+  the square brackets can be ommited so this is also eligible syntax
+  ```python
+  run [function name] concurrently
+  ```
+  so thats it
 - ### Scoping
   lexical variable scope assignment syntax that is 
   ```go
@@ -411,12 +421,19 @@ Well the one which I just developed is called var syntax
   }
   ```
   is eligible code
-  <br>#### while
-  will work with any charge value and operators and also supports the same boolean deciphering as if so the following code is eligible
+  <br><br>
+  ####  while<br>
+  will work with any charge value and operators and also supports the same boolean deciphering as "if" so the following code is eligible
   ```python
   a,b = 2,2
   while a and b are equal {
   	# do something
+  }
+  ```
+  to do an infinite loop just write
+  ```python
+  while {
+  	# whatever
   }
   ```
   <br>#### Input
