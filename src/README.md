@@ -14,7 +14,7 @@ Well the one which I just developed is called var syntax
   ```
   on being called the place where the name was will be changed by its body now why I say changes well let me give you an example
   ```python
-  var a,b = 20,30
+  var a|b = 20|30
   add
   println "the sum of a and b is {c}"
   
@@ -70,7 +70,7 @@ Well the one which I just developed is called var syntax
   **Function Calling** is another thing that I feel is beautiful about the language why so? well here you go 
   ```python
   func main{
-  	var a,b = 20,30
+  	var a|b = 20|30
   	printf "hello,world",num
   	var x = add a and b
   	var c = choose a or b
@@ -196,10 +196,10 @@ Well the one which I just developed is called var syntax
     ```
     strings
     ```python
-    str = "hzzzzz"
-    joj = "aelloaaaa"
+    str = "world"
+    joj = "hello"
     ans = str - joj
-    print "{ans}" # output will be hzzzzz
+    print "{ans}" # output will be world
     ```
   - #### *
     basic arithmatic multiplication for numbers and Doubles,boolean and for charges and a recursive concatination for strings<br>eg:-
@@ -237,16 +237,16 @@ Well the one which I just developed is called var syntax
     print "answer2 is {ans2}"
     # both will yield the result "llo"
     ```
-  - #### &
+  - #### &&
     boolean/logical "and" works the same way as python's "and" or java's "&&"<br>it is also bitwise "and" for number operators
-  - #### |
+  - #### ||
     boolean/logical "or" works the same way as python's "or" or java's "||"<br>it is also bitwise "or" for number operands <br>This can also be used to find the string with a higher ascii value<br>eg:-
     ```python
     str1 = "hello"
     str2 = "hellp"
     str = str1|str2 # str will have hellp 
     ```
-  - #### ^
+  - #### ^^
     boolean/logical "xor" works the same way as java's "^"<br>it is also bitwise "xor" for number operands<br>it can also be used on strings to find the smaller of two strings<br>eg:-
     ```python
     str1 = "hello"
@@ -274,18 +274,18 @@ Well the one which I just developed is called var syntax
     this is relational "equal to" or "=="<br>eg
     ```python
     str1,str2,str3 = "hello","help","hello"
-    bool = str1?str2  # false
-    bool = str2?str3  # false
-    bool = str3?str1  # true
+    bool = str1==str2  # false
+    bool = str2==str3  # false
+    bool = str3==str1  # true
     ```
   - #### != :-
     this is not boolean "not" this is relational "not equal to" or "!=" like so<br>
     eg:-
     ```python
     str1,str2,str3 = "hello","help","hello"
-    bool = str1!str2  # true
-    bool = str2!str3  # true
-    bool = str3!str1  # false
+    bool = str1!=str2  # true
+    bool = str2!=str3  # true
+    bool = str3!=str1  # false
     ```
 - ### Special Functions
   #### if else<br>
@@ -306,9 +306,9 @@ Well the one which I just developed is called var syntax
   	[body]
   }
   ```
-  this is not allowed and will mess the code up<br>now all boolean operators work as if's arguments but please not that there are some differences in this language then your traditional languages that is the equals to, how so? I shall demonstrate this<br>this is viper code
+  this is not allowed and will mess the code up<br>now all boolean operators work as if's arguments but please not that there are some differences in this language then your traditional languages that is the equals to, how so? I shall demonstrate this<br>this is musket code
   ```python
-  args1,args2 = "hello"
+  args1|args2 = "hello"|"hello"
   if args1,args2 are equal {
   	[body]
   }
@@ -322,7 +322,7 @@ Well the one which I just developed is called var syntax
   ```
   as you can see the "==" is replaced with the suffixed function call " are equal" this creates the code more verbose and this will work in every situation, you can call the " are equal" function on as many operands as you want like this
   ```python
-  args1,args2,args3,args4 = 20
+  args1|args2|args3|args4 = 20|20|20|20
   if args1,args2,args3,args4 are equal {
   	[body]
   }
