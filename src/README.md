@@ -16,7 +16,7 @@ Well the one which I just developed is called var syntax
   ```python
   var a,b = 20,30
   add
-  print "the sum of a and b is {c}"
+  println "the sum of a and b is {c}"
   
   var add <- (
   	var c = a + b 
@@ -36,20 +36,20 @@ Well the one which I just developed is called var syntax
   Thus it is possible for you to write python's informal syntax in this language but also c++'s formal syntax both are welcomed with open hands
   example
   ```python
-  print "hello world"
+  println "hello world"
   printf "hello" and "world"
   func printf (name1,name2){
-  	pure_print("{name1} {name2}")
+  	print("{name1} {name2}")
   }
   ```
   or
   ```python
   func main {
-  	print "hello world"
+  	println "hello world"
   	printf "hello" and "world"	
   }
   func printf = (name1,name2){
-  	pure_print("{name1} {name2}")
+  	print("{name1} {name2}")
   }
   ```
   both are eligible syntax
@@ -71,13 +71,14 @@ Well the one which I just developed is called var syntax
   ```python
   func main{
   	var a,b = 20,30
-  	println "hello,world",num
+  	printf "hello,world",num
   	var x = add a and b
   	var c = choose a or b
   }
-  func println(str,num){
-  	print "{str}{num}"
+  func printf (str,num) {
+  	print "{str} {num}"
   }
+  
   func add (arg1,arg2){
   	ans = arg1+arg2
   	return ans
@@ -269,7 +270,7 @@ Well the one which I just developed is called var syntax
     works how you expect it to,returns charge
   - #### < :- 
     works how you expect it to,returns charge
-  - #### ? :-
+  - #### == :-
     this is relational "equal to" or "=="<br>eg
     ```python
     str1,str2,str3 = "hello","help","hello"
@@ -277,7 +278,7 @@ Well the one which I just developed is called var syntax
     bool = str2?str3  # false
     bool = str3?str1  # true
     ```
-  - #### ! :-
+  - #### != :-
     this is not boolean "not" this is relational "not equal to" or "!=" like so<br>
     eg:-
     ```python
