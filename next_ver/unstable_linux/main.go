@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	//"time"
 	//"compiler/cmd"
 )
 
@@ -22,7 +23,7 @@ const (
 	BUILD_FAIL_ERR                  string = "FATAL ERROR\nBUILD FAILED"
 
 	//files
-	DEFAULT_EXEC_FILE = "lethalityTest.vpr"
+	DEFAULT_EXEC_FILE = "lethalityTest.mskt"
 	//for method syntactic sugar
 	METHOD_SYNTACTIC_SUGAR_STORAGE = "methodSugar.txt"
 	SUGAR_DELIM                    = "|"
@@ -44,8 +45,8 @@ const (
 	THREAD_EXECUTION    string = "run ... concurrently"
 
 	//special syntax
-	PRINTING          string = "print "
-	PURE_PRINT        string = "pure_print "
+	PRINTLN           string = "println "
+	PRINT             string = "print "
 	INPUT             string = "input "
 	NOT               string = "not "
 	IF                string = "if "
@@ -108,19 +109,8 @@ type Block struct {
 }
 
 type Operators struct {
-	rep    rune
+	rep    string
 	action oprAction
-}
-
-type DataNode struct {
-	data         Data
-	pointer      NodePointer
-	doesNotExist bool
-}
-
-type NodePointer struct {
-	parent *DataNode
-	action rune
 }
 
 type Thread struct {
@@ -794,13 +784,13 @@ func removeSyntacticSugar(method string) string {
 }
 
 func (caller ScopeNode) checkSpecialFunctions(line string) (bool, int) {
-	if strings.HasPrefix(line, PRINTING) {
-		caller.print(line)
+	if strings.HasPrefix(line, PRINTLN) {
+		caller.println(line)
 		return true, 0
 	}
 
-	if strings.HasPrefix(line, PURE_PRINT) {
-		caller.pure_print(line)
+	if strings.HasPrefix(line, PRINT) {
+		caller.print(line)
 		return true, 0
 	}
 
@@ -826,18 +816,31 @@ func (caller ScopeNode) checkSpecialFunctions(line string) (bool, int) {
 	return false, 0
 }
 
-func (caller ScopeNode) print(statement string) {
+func (caller ScopeNode) println(statement string) {
 	statement = strings.TrimSpace(statement)
-	statement = string([]rune(statement)[len(PRINTING)+1 : len(statement)-1])
-	statement = caller.replaceVars(statement)
 
+	statement = string([]rune(statement)[len(PRINTLN):])
+	if strings.HasPrefix(statement, "\"") && strings.HasSuffix(statement, "\"") || strings.HasPrefix(statement, "'") && strings.HasSuffix(statement, "'") {
+		statement = string([]rune(statement)[1 : len(statement)-1])
+		statement = caller.replaceVars(statement)
+	} else {
+		statement = caller.compute(statement).stringRep
+
+	}
 	fmt.Println("\u001B[96m" + statement + "\u001B[0m")
+
 }
 
-func (caller ScopeNode) pure_print(statement string) {
+func (caller ScopeNode) print(statement string) {
 	statement = strings.TrimSpace(statement)
-	statement = string([]rune(statement)[len(PURE_PRINT)+1 : len(statement)-1])
-	statement = caller.replaceVars(statement)
+	statement = string([]rune(statement)[len(PRINT):])
+	if strings.HasPrefix(statement, "\"") && strings.HasSuffix(statement, "\"") || strings.HasPrefix(statement, "'") && strings.HasSuffix(statement, "'") {
+		statement = string([]rune(statement)[1 : len(statement)-1])
+		statement = caller.replaceVars(statement)
+	} else {
+		statement = caller.compute(statement).stringRep
+
+	}
 
 	fmt.Print("\u001B[96m" + statement + "\u001B[0m")
 }
@@ -903,12 +906,12 @@ func (caller ScopeNode) takeInput(line string) {
 	parts[0] = strings.TrimSpace(parts[0])
 	parts[1] = string([]rune(parts[1])[1:])
 
-	caller.pure_print(PURE_PRINT + " " + parts[1] + "\"")
+	caller.print(PRINT + " " + parts[1] + "\"")
 	reader := bufio.NewReader(os.Stdin)
 	str, _ := reader.ReadString('\n')
 	nstr := "\"" + string([]rune(str)[:len(str)-1]) + "\""
 
-	data := encapsulate(nstr, ' ').data
+	data := encapsulate(nstr)
 
 	caller.searchTheTreeAndPlace(parts[0], data)
 }
@@ -932,7 +935,7 @@ func (caller ScopeNode) NOT(line string) {
 	boolVal := !boolCounterpart
 	value = strconv.FormatBool(boolVal)
 
-	var data Data = encapsulate(value, ' ').data
+	var data Data = encapsulate(value)
 
 	caller.varSave[name] = data
 }
@@ -1121,7 +1124,6 @@ func (caller ScopeNode) tryWhile(line string) {
 func (caller ScopeNode) loop(loopMethod MethodData, startIndex, endIndex int, condition string) {
 	value := caller.computeBooleanCondition(condition)
 
-	//fmt.Println(condition,endIndex)
 	if value == "true" {
 		loopMethod.runThrough(startIndex)
 		caller.loop(loopMethod, 1, endIndex, condition)
@@ -1157,7 +1159,7 @@ func (data MethodData) functionReturn(line string) {
 	dataNode, found := caller.searchTreeFor(returnable)
 	var returnData Data
 
-	returnData = encapsulate(returnable, ' ').data
+	returnData = encapsulate(returnable)
 
 	if found {
 		returnData = dataNode
@@ -1229,24 +1231,26 @@ func createStringRep(line string, TYPE string) string {
 func (caller ScopeNode) compute(value string) Data {
 	value = strings.TrimSpace(value)
 	if hasNoOperators(value) {
-		value = value + "+0"
-		/*temp,found := caller.searchTreeFor(value)
-		if found {
-			value = temp.value
+		value = strings.TrimSpace(value)
+		isAFunction, name := checkIfAFunction(value)
+
+		if isAFunction {
+			caller.callFunction(value, name, *caller.owner, caller.presentLine)
+		} else {
+			temp, found := caller.searchTreeFor(value)
+			if found {
+				value = temp.value
+			}
+			Type := decipherType(strings.TrimSpace(value))
+
+			return Data{value, Type, createStringRep(value, Type)}
 		}
-
-		Type := decipherType(strings.TrimSpace(value))
-		valueD := value
-
-		return Data{value,Type,createStringRep(valueD,Type)}*/
 	}
 
 	value = caller.applyOperators(value)
-
 	Type := decipherType(strings.TrimSpace(value))
-	valueD := value
 
-	return Data{value, Type, createStringRep(valueD, Type)}
+	return Data{value, Type, createStringRep(value, Type)}
 }
 
 func hasNoOperators(args string) bool {
@@ -1260,112 +1264,143 @@ func hasNoOperators(args string) bool {
 }
 
 func (caller ScopeNode) applyOperators(line string) string {
-	var splitPoints []int
-	mapp := make(map[int]rune)
-	elems := []rune(" " + line)
+	var list []string
 
-	headPointer := &DataNode{Data{}, NodePointer{&DataNode{Data{}, NodePointer{}, false}, ' '}, true}
+	list = splitOnOperators(line)
 
-	splitPoints = append(splitPoints, 0)
-	for i := 0; i < len(operatorList); i++ {
-		for j := 0; j < len(elems); j++ {
-			if elems[j] == operatorList[i].rep {
-
-				splitPoints = append(splitPoints, j)
-				mapp[j] = operatorList[i].rep
-			}
-		}
-	}
-
-	splitPoints = append(splitPoints, len(elems))
-
-	var parts []string
-
-	for i := 0; i < len(splitPoints)-1; i++ {
-		repr := strings.TrimSpace(string(elems[splitPoints[i]+1 : splitPoints[i+1]]))
+	for i := 0; i < len(list); i++ {
+		repr := strings.TrimSpace(list[i])
 		val, found := caller.searchTreeFor(repr)
 
 		if found {
-			str := val.value + string(mapp[splitPoints[i+1]])
-			parts = append(parts, str)
+			list[i] = val.value
 		} else {
 			isAFunction, name := checkIfAFunction(repr)
 			if isAFunction {
 				caller.callFunction(repr, name, *caller.owner, caller.presentLine)
 			}
-			str := repr + string(mapp[splitPoints[i+1]])
-			parts = append(parts, str)
 		}
 	}
 
-	for i := 0; i < len(parts); i++ {
-		symbol := []rune(parts[i])[len(parts[i])-1]
-		parts[i] = string([]rune(parts[i])[:len(parts[i])-1])
-		headPointer.iterateAndAdd(parts[i], symbol)
+	answer := calculate(list)
+	return answer
+}
+
+func splitOnOperators(line string) []string {
+	list := make([]string, 1)
+	var iterator string
+
+	line = replaceSpaces(line)
+
+	for i := 0; i < len(line); i++ {
+
+		iterator = string([]rune(line)[i:])
+
+		for j := 0; j < len(operatorList); j++ {
+			if strings.HasPrefix(iterator, operatorList[j].rep) {
+
+				previousElement := string([]rune(line)[:len(line)-len(iterator)])
+				operator := string([]rune(iterator)[:len(iterator)-len(operatorList[j].rep)])
+				line = string([]rune(line)[len(line)-len(iterator)+len(operatorList[j].rep):])
+				list = append(list, previousElement, operator)
+
+				i = 0
+
+			}
+		}
+	}
+	list = append(list, line)
+
+	return list
+}
+
+func replaceSpaces(args string) (returnable string) {
+	elems := strings.Split(args, "")
+
+	for i := 0; i < len(elems); i++ {
+		if elems[i] == " " {
+			ar := string([]rune(args)[:i])
+			gs := string([]rune(args)[i-1:])
+			args = ar + gs
+		} else if elems[i] == "\"" || elems[i] == "'" {
+			delim := []rune(elems[i])
+			_, i = getBlock(elems, i, delim[i], delim[i])
+		}
 	}
 
-	answer := headPointer.calculate()
-	return answer
+	for i := 0; i < len(elems); i++ {
+		returnable = returnable + elems[i]
+	}
+
+	return
 }
 
 func checkIfAFunction(args string) (bool, string) {
 	return functionCall(args)
 }
 
-func (caller *DataNode) iterateAndAdd(element string, symbol rune) {
-	presentNode := &caller
-	done := false
-
-	for !done {
-		if !((**presentNode).pointer.parent.doesNotExist) {
-			dataNode := encapsulate(element, symbol)
-			(*presentNode).pointer.parent = &dataNode
-			break
-		} else {
-			presentNode = &(**presentNode).pointer.parent
-		}
-	}
-}
-
-func encapsulate(element string, symbol rune) DataNode {
+func encapsulate(element string) Data {
 	element = strings.TrimSpace(element)
 	Type := decipherType(element)
 	rep := createStringRep(element, Type)
+
 	if Type == STRING {
 		element = string([]rune(element)[1 : len(element)-1])
 	}
+
 	data := Data{element, Type, rep}
-	pointer := NodePointer{&DataNode{}, symbol}
-	return DataNode{data, pointer, true}
+	return data
 }
 
-func (caller *DataNode) calculate() string {
-	result := "\u001B[91m" + NULL + "\u001B[0m"
-	nextSymbol := ' '
-	for (*(*caller).pointer.parent).pointer.parent.doesNotExist {
-		child := *(*caller).pointer.parent
-		parent := (*(*(*caller).pointer.parent).pointer.parent)
+func calculate(list []string) string {
+	result := "\u001B[91m" + NULL
 
-		for i := 0; i < len(operatorList); i++ {
-			if operatorList[i].rep == child.pointer.action {
-				result, _ = operatorList[i].action(child.data, parent.data)
+	//list = removeEmptyIndexes(list)
+	for i := 1; i < len(list)-1; i++ {
+		for j := 0; j < len(operatorList); j++ {
+			if list[i] == operatorList[j].rep {
+				ans, _ := operatorList[j].action(encapsulate(list[i-1]), encapsulate(list[i+1]))
+				list = delete(list, i-1, i, i+1)
+				list[0] = ans
+				result = genString(list)
+
+				i = 1
 				break
 			}
 		}
-
-		nextSymbol = (*(*caller).pointer.parent).pointer.action
-		dataNode := encapsulate(result, nextSymbol)
-
-		dataNode.pointer.parent = parent.pointer.parent
-
-		(*caller).pointer.parent = &dataNode
 	}
+
 	return result
+}
+
+func delete(arr []string, indexes ...int) []string {
+	for i := 0; i < len(indexes); i++ {
+		arr = del(arr, indexes[0])
+	}
+
+	return arr
+}
+
+func del(a []string, i int) []string {
+	copy(a[i:], a[i+1:])
+	a[len(a)-1] = ""
+	a = a[:len(a)-1]
+	return a
+}
+
+//func removeEmptyIndexes ([]string)
+
+func genString(args []string) (ans string) {
+	for i := 0; i < len(args); i++ {
+		ans = ans + args[i]
+	}
+
+	return
 }
 
 //operators
 func InititializeOperators() {
-	PLUS := Operators{'+',
+	PLUS := Operators{"+",
 		func(arg1 Data, arg2 Data) (string, bool) {
 			if arg1.Type == NUMBER {
 
@@ -1458,7 +1493,7 @@ func InititializeOperators() {
 			return NULL, true
 		}}
 
-	MINUS := Operators{'-',
+	MINUS := Operators{"-",
 		func(arg1 Data, arg2 Data) (string, bool) {
 			if arg1.Type == NUMBER {
 
@@ -1614,7 +1649,7 @@ func InititializeOperators() {
 			return NULL, true
 		}}
 
-	MULT := Operators{'*',
+	MULT := Operators{"*",
 		func(arg1 Data, arg2 Data) (string, bool) {
 			if arg1.Type == NUMBER {
 
@@ -1737,7 +1772,7 @@ func InititializeOperators() {
 			return NULL, true
 		}}
 
-	DIVIDE := Operators{'/',
+	DIVIDE := Operators{"/",
 		func(arg1 Data, arg2 Data) (string, bool) {
 			if arg1.Type == NUMBER {
 
@@ -1897,7 +1932,7 @@ func InititializeOperators() {
 			return NULL, true
 
 		}}
-	MOD := Operators{'%',
+	MOD := Operators{"%",
 		func(arg1 Data, arg2 Data) (string, bool) {
 			if arg1.Type == NUMBER {
 
@@ -2024,7 +2059,7 @@ func InititializeOperators() {
 			return NULL, true
 		}}
 
-	AND := Operators{'&',
+	AND := Operators{"&",
 		func(arg1, arg2 Data) (string, bool) {
 			if arg1.Type == NUMBER {
 				if arg2.Type == NUMBER {
@@ -2064,7 +2099,7 @@ func InititializeOperators() {
 			return NULL, true
 		}}
 
-	OR := Operators{'|',
+	OR := Operators{"|",
 		func(arg1, arg2 Data) (string, bool) {
 
 			if arg1.Type == NUMBER {
@@ -2124,7 +2159,7 @@ func InititializeOperators() {
 			return NULL, true
 		}}
 
-	XOR := Operators{'^',
+	XOR := Operators{"^",
 		func(arg1, arg2 Data) (string, bool) {
 
 			if arg1.Type == NUMBER {
@@ -2182,7 +2217,7 @@ func InititializeOperators() {
 			return NULL, true
 		}}
 
-	GREATER := Operators{'>',
+	GREATER := Operators{">",
 		func(arg1, arg2 Data) (string, bool) {
 			if arg1.Type == NUMBER && arg2.Type == NUMBER {
 				num1, _ := strconv.Atoi(arg1.value)
@@ -2199,7 +2234,7 @@ func InititializeOperators() {
 			return strconv.FormatBool(arg1.value > arg2.value), true
 		}}
 
-	LESSER := Operators{'<',
+	LESSER := Operators{"<",
 		func(arg1, arg2 Data) (string, bool) {
 			if arg1.Type == NUMBER && arg2.Type == NUMBER {
 				num1, _ := strconv.Atoi(arg1.value)
@@ -2216,12 +2251,12 @@ func InititializeOperators() {
 			return strconv.FormatBool(arg1.value < arg2.value), true
 		}}
 
-	INEQUAL := Operators{'!',
+	INEQUAL := Operators{"=!",
 		func(arg1, arg2 Data) (string, bool) {
 			return strconv.FormatBool(arg1.value != arg2.value), true
 		}}
 
-	EQUAL := Operators{'?',
+	EQUAL := Operators{"==",
 		func(arg1, arg2 Data) (string, bool) {
 			return strconv.FormatBool(arg1.value == arg2.value), true
 		}}

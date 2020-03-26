@@ -1,0 +1,17 @@
+func main{
+	h=10
+	i=0
+	j=0
+
+	while i<h{
+		j = 0
+		while i>j{
+			print j
+			
+			j = j+1
+		}
+		println ""
+		i = i+1
+	}
+}
+
