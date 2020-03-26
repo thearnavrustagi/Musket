@@ -4,29 +4,35 @@ code is in developement stage please wait for a release
   Musket is an open source project which is aiming to create a formal,reliable and efficient language like go and c++ but also a language with short,concise and verbose syntax like python and ruby
 <br>**sample program**
 ```python
-x = 20
-a,b,c = 10,15,17
-x = 30
-test = "x - y"
-something
+hw,a,b,c = "hello, world",3,a,b
 
-print "okay a is {a}|{b}|{c}|{x}"
+println ("hello, world")
+println "hello, world"
+println hw
+print "hey did you know {a} = {b} = {c}"
 	
-var x = subtract a,b
-var y = add a and b
-
-var something <- (
-	print "hello"
-	var = {yulo}
-)
+x = subtract(a,b)
+y = subtract a,b
+z = subtract a and b
 
 func subtract (a,b){
 	return a-b
 }
 
-func add (a,b){
-	return a+b
-}
+println " and that {x} = {y} = {z}"
+{var_synt}
+
+var_synt <- (
+	println "stopping execution"
+)
+ ```
+ output
+ ```bash
+ hello, world
+ hello, world
+ hello, world
+ hey did you know 3 = 3 = 3 and that 0 = 0 = 0
+ stopping execution
  ```
  #### the whole syntax is not made but here are the parts that are made<br>
  PRESENT SYNTAX <br>
