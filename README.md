@@ -4,7 +4,7 @@ code is in developement stage please wait for a release
   Musket is an open source project which is aiming to create a formal,reliable and efficient language like go and c++ but also a language with short,concise and verbose syntax like python and ruby
 <br>**sample program**
 ```python
-hw,a,b,c = "hello, world",3,a,b
+hw|a|b|c = "hello, world"|3|a|b
 
 println ("hello, world")
 println "hello, world"
